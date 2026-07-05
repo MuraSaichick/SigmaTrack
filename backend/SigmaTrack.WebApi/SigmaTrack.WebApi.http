@@ -1,0 +1,6 @@
+@SigmaTrack.WebApi_HostAddress = http://localhost:5069
+
+GET {{SigmaTrack.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

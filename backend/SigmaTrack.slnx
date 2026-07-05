@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Элементы решения/">
+    <File Path=".gitignore" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="SigmaTrack.Application/SigmaTrack.Application.csproj" />
+  <Project Path="SigmaTrack.Domain/SigmaTrack.Domain.csproj" />
+  <Project Path="SigmaTrack.Infrastructure/SigmaTrack.Infrastructure.csproj" />
+  <Project Path="SigmaTrack.WebApi/SigmaTrack.WebApi.csproj" />
+</Solution>
