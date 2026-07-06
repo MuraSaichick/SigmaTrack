@@ -164,7 +164,7 @@ onMounted(async () => {
       <div class="flex items-center gap-2">
         <NotificationBell />
         
-        <UButton :icon="isMobileMenuOpen ? 'i-lucide-x' : 'i-lucide-menu'" color="neutral" variant="ghost" @click="isMobileMenuOpen = !isMobileMenuOpen" />
+        <UButton :icon="isMobileMenuOpen ? 'i-lucide-x' : 'i-lucide-menu'" color="neutral" variant="ghost" @click="void (isMobileMenuOpen = !isMobileMenuOpen)" />
       </div>
     </header>
 

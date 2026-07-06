@@ -60,8 +60,25 @@ builder.Services.AddApplicationUseCases(typeof(CreateIssueUseCase).Assembly);
 var app = builder.Build();
 app.UseExceptionHandler();
 
-app.UseCors("NuxtApp");
-if(app.Environment.IsDevelopment())
+//app.UseCors("NuxtApp");
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<AppDbContext>();
+        if (context.Database.GetPendingMigrations().Any())
+        {
+            context.Database.Migrate();
+        }
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Не удалось применить миграции при старте контейнера.");
+    }
+}
+if (app.Environment.IsDevelopment())
 {
 
     app.Use(async (context, next) =>

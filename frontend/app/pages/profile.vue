@@ -115,7 +115,6 @@ const onSubmit = async (event: FormSubmitEvent<any>) => {
             <UAlert title="Ошибка загрузки данных" color="error" variant="subtle"
                 icon="i-heroicons-exclamation-triangle" />
         </div>
-
         <div v-else-if="profileData">
             <UCard v-if="!isEditing" class="shadow-sm">
                 <template #header>
@@ -291,7 +290,7 @@ const onSubmit = async (event: FormSubmitEvent<any>) => {
                     </div>
                 </UFormField>
                 <div class="flex justify-end gap-3 border-t border-gray-100 dark:border-gray-800 pt-4">
-                    <UButton color="neutral" variant="ghost" @click="isEditing = false">
+                    <UButton color="neutral" variant="ghost" @click="void (isEditing = false)">
                         {{ $t('profile.cancel') }}
                     </UButton>
                     <UButton type="submit" color="primary">

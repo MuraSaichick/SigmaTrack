@@ -10,6 +10,12 @@ export default defineNuxtConfig({
     '@nuxtjs/i18n',
     '@pinia/nuxt'
   ],
+  icon: {
+    serverBundle: 'local',
+    clientBundle: {
+      scan: true,
+    },
+  },
   runtimeConfig: {
     public: {
       apiBase: ''
@@ -22,7 +28,7 @@ export default defineNuxtConfig({
       { code: 'ru', name: 'Русский' },
       { code: 'en', name: 'English' }
     ],
-    vueI18n: 'D:/Projects/SigmaTrack/Project/frontend/i18n/i18n.config.ts'
+    vueI18n: '~/i18n/i18n.config.ts'
   },
-  devtools: { enabled: true }
+  devtools: { enabled: false }
 })

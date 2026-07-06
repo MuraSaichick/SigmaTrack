@@ -212,7 +212,7 @@ onMounted(() => {
     <div class="max-w-4xl mx-auto py-6 px-4 space-y-6">
         <div class="flex items-center gap-3">
             <UButton icon="i-lucide-arrow-left" variant="ghost" color="neutral" class="rounded-xl"
-                @click="navigateTo('/')" />
+                @click="void (navigateTo('/'))"/>
             <h1 class="text-2xl font-black tracking-tight text-neutral-900 dark:text-white">
                 {{ $t('projectSettings.title') }}
             </h1>
@@ -353,7 +353,7 @@ onMounted(() => {
 
                                                     <div class="flex justify-end gap-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
                                                         <UButton color="neutral" variant="ghost" class="rounded-xl font-bold"
-                                                            @click="isKickModalOpen = false">
+                                                            @click="void (isKickModalOpen = false)">
                                                             {{ $t('projectSettings.modals.cancel') }}
                                                         </UButton>
                                                         <UButton color="error" class="rounded-xl font-bold shadow-xs" :loading="isKickingMember"
@@ -426,7 +426,7 @@ onMounted(() => {
 
                                     <div class="flex justify-end gap-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
                                         <UButton color="neutral" variant="ghost" class="rounded-xl font-bold"
-                                            @click="isDeleteModalOpen = false">
+                                            @click="void (isDeleteModalOpen = false)">
                                             {{ $t('projectSettings.modals.cancel') }}
                                         </UButton>
                                         <UButton color="error" class="rounded-xl font-bold shadow-xs"

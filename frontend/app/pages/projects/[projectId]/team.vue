@@ -243,7 +243,7 @@ onMounted(() => {
               variant="ghost" 
               class="rounded-xl font-bold" 
               :disabled="isLeaving" 
-              @click="isConfirmModalOpen = false"
+              @click="void (isConfirmModalOpen = false)"
             >
               {{ t('team.modal.cancelBtn') }}
             </UButton>
