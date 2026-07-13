@@ -17,48 +17,48 @@ public class IssueEndpoints : IEndpointModule
 {
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("api/issues")
-                       .WithTags("Issues")
-                       .RequireAuthorization();
+        var projectGroup = app.MapGroup("api/projects/{projectId:guid}/issues")
+                              .WithTags("Issues")
+                              .RequireAuthorization();
 
-        group.MapPost("/", CreateIssueAsync);
-        group.MapGet("/", GetIssuesAsync);
-        group.MapGet("/{id:guid}", GetIssueByIdAsync);
-        group.MapPost("/{id:guid}/comments", AddCommentAsync);
+        projectGroup.MapPost("", CreateIssueAsync);
+        projectGroup.MapGet("", GetIssuesAsync);
 
-        group.MapPut("/{issueId:guid}/status", ChangeStatusAsync)
+        var issueGroup = app.MapGroup("api/issues")
+                            .WithTags("Issues")
+                            .RequireAuthorization();
+
+        issueGroup.MapGet("/{id:guid}", GetIssueByIdAsync);
+        issueGroup.MapPost("/{id:guid}/comments", AddCommentAsync);
+
+        issueGroup.MapPut("/{issueId:guid}/status", ChangeStatusAsync)
             .WithName("ChangeIssueStatus")
-            .Produces(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status400BadRequest)
-            .Produces(StatusCodes.Status404NotFound)
-            .Produces(StatusCodes.Status500InternalServerError);
-
-        group.MapPut("/{issueId:guid}", UpdateIssueDetailsAsync)
-            .WithName("UpdateIssueDetails")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status404NotFound);
 
-        group.MapPut("/{id:guid}/assignee", AssignIssueAsync)
-            .WithName("AssignIssue"); // Лишний .RequireAuthorization() и .WithTags() убраны, т.к. они наследуются от группы[cite: 1]
+        issueGroup.MapPut("/{issueId:guid}", UpdateIssueDetailsAsync)
+            .WithName("UpdateIssueDetails")
+            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound);
 
-        group.MapGet("/users/{userId:guid}/active-issues", GetActiveIssuesByAssigneeAsync)
-            .WithName("GetActiveIssuesByAssignee")
-            .Produces<IReadOnlyCollection<UserActiveIssueResponse>>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status400BadRequest)
-            .Produces(StatusCodes.Status401Unauthorized);
+        issueGroup.MapPut("/{id:guid}/assignee", AssignIssueAsync)
+            .WithName("AssignIssue");
+
+        issueGroup.MapGet("/users/{userId:guid}/active-issues", GetActiveIssuesByAssigneeAsync)
+            .WithName("GetActiveIssuesByAssignee");
     }
-
     private static async Task<IResult> CreateIssueAsync(
+        [FromRoute] Guid projectId,
         [FromBody] CreateIssueRequest request,
         [FromServices] ICreateIssueUseCase useCase,
         ClaimsPrincipal user,
         CancellationToken cancellationToken)
-    {
+    {   
         var userId = user.GetUserId();
 
         var command = new CreateIssueCommand(
-            request.ProjectId,
+            projectId,
             userId,
             request.Title,
             request.Description,
@@ -74,10 +74,22 @@ public class IssueEndpoints : IEndpointModule
     }
 
     private static async Task<IResult> GetIssuesAsync(
-        [AsParameters] GetIssuesListQuery query,
+        [FromRoute] Guid projectId,
+        [AsParameters] GetIssuesApiRequest apiRequest,
         [FromServices] IGetIssuesListUseCase useCase,
         CancellationToken cancellationToken)
     {
+        var query = new GetIssuesListQuery(
+            ProjectId: projectId,
+            Status: apiRequest.Status,
+            Type: apiRequest.Type,
+            Priority: apiRequest.Priority,
+            AssigneeId: apiRequest.AssigneeId,
+            SearchTerm: apiRequest.SearchTerm,
+            PageNumber: apiRequest.PageNumber,
+            PageSize: apiRequest.PageSize
+         );
+
         var result = await useCase.ExecuteAsync(query, cancellationToken);
         return Results.Ok(result);
     }
@@ -147,8 +159,7 @@ public class IssueEndpoints : IEndpointModule
             Environment: request.Environment,
             Tags: request.Tags,
             IsReproducible: request.IsReproducible,
-            StepsToReproduce: request.StepsToReproduce
-        );
+            StepsToReproduce: request.StepsToReproduce);
 
         await useCase.ExecuteAsync(command, cancellationToken);
         return Results.Ok(new { message = "Данные задачи успешно обновлены." });
@@ -158,7 +169,7 @@ public class IssueEndpoints : IEndpointModule
         [FromRoute] Guid id,
         [FromBody] AssignIssueRequest request,
         [FromServices] IAssignIssueUseCase useCase,
-        ClaimsPrincipal user, // HttpContext заменен на ClaimsPrincipal[cite: 1]
+        ClaimsPrincipal user,
         CancellationToken cancellationToken)
     {
         var currentUserId = user.GetUserId();

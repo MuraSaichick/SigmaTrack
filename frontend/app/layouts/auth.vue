@@ -22,7 +22,7 @@ const toggleLanguage = () => {
         {{ locale.toUpperCase() }}
       </UButton>
       <UButton color="neutral" variant="ghost" size="sm" class="rounded-full"
-        :icon="isDark ? 'i-lucide-moon' : 'i-lucide-sun'" @click="isDark = !isDark" />
+        :icon="isDark ? 'i-lucide-moon' : 'i-lucide-sun'" @click="() => {isDark = !isDark}" />
     </div>
 
     <div class="w-full max-w-md space-y-6">

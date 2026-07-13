@@ -35,7 +35,6 @@ namespace SigmaTrack.Domain.Entities
         public DateTime CreatedAt { get; set; }
 
         public ICollection<ProjectMember> ProjectMembers { get; set; } = new List<ProjectMember>();
-        public ICollection<IssueComment> Comments { get; set; } = new List<IssueComment>();
         public ICollection<IssueHistory> AuditLogs { get; set; } = new List<IssueHistory>();
         public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
         public ICollection<ProjectInvitation> IncomingInvitations { get; set; } = new List<ProjectInvitation>();

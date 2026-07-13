@@ -5,6 +5,7 @@ using Scalar.AspNetCore;
 using SigmaTrack.Application.Common;
 using SigmaTrack.Application.Features.Issues.CreateIssue;
 using SigmaTrack.Application.Interfaces;
+using SigmaTrack.Infrastructure;
 using SigmaTrack.Infrastructure.Authentication;
 using SigmaTrack.Infrastructure.Common;
 using SigmaTrack.Infrastructure.Data;
@@ -52,6 +53,7 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IJwtProvider, JwtProvider>();
+builder.Services.AddScoped<IStorageService, LocalStorageService>();
 
 builder.Services.AddInfrastructureRepositories(typeof(IssueRepository).Assembly);
 
@@ -60,7 +62,6 @@ builder.Services.AddApplicationUseCases(typeof(CreateIssueUseCase).Assembly);
 var app = builder.Build();
 app.UseExceptionHandler();
 
-//app.UseCors("NuxtApp");
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -80,7 +81,7 @@ using (var scope = app.Services.CreateScope())
 }
 if (app.Environment.IsDevelopment())
 {
-
+    app.UseCors("NuxtApp");
     app.Use(async (context, next) =>
     {
         var referer = context.Request.Headers["Referer"].ToString();

@@ -9,6 +9,33 @@ using System.Threading.Tasks;
 
 namespace SigmaTrack.Application.Features.Issues.GetIssueById;
 public record GetIssueByIdQuery(Guid Id);
+public record AttachmentResponseDto(
+    Guid Id,
+    string Filename,
+    string FileUrl,
+    long FileSize,
+    string ContentType,
+    DateTime UploadedAt
+);
+public record CommentDto(
+    Guid Id,
+    Guid AuthorId,
+    string AuthorName,
+    string Text,
+    DateTime CreatedAt,
+    DateTime? UpdatedAt,
+    List<string> Mentions,
+    List<AttachmentResponseDto> Attachments
+    );
+
+    public record IssueLinkDto(
+    Guid Id,
+    Guid TargetIssueId,
+    string TargetIssueNumber,
+    string TargetIssueTitle,
+    IssueLinkType LinkType,
+    string? Description
+);
 public record IssueDetailResponse(
     Guid Id,
     Guid ProjectId,
@@ -48,24 +75,6 @@ public record IssueDetailResponse(
     List<IssueLinkDto> Links
 );
 
-public record CommentDto(
-    Guid Id,
-    Guid AuthorId,
-    string AuthorName,
-    string Text,
-    DateTime CreatedAt,
-    DateTime? UpdatedAt,
-    List<string> Mentions,
-    List<string> AttachmentUrls
-);
-public record IssueLinkDto(
-    Guid Id,
-    Guid TargetIssueId,
-    string TargetIssueNumber,
-    string TargetIssueTitle,
-    IssueLinkType LinkType,       
-    string? Description
-);
 public interface IGetIssueByIdUseCase
 {
     Task<IssueDetailResponse> ExecuteAsync(GetIssueByIdQuery query, CancellationToken cancellationToken);
@@ -104,9 +113,15 @@ public class GetIssueByIdUseCase : IGetIssueByIdUseCase
             c.CreatedAt,
             c.UpdatedAt,
             c.Mentions,
-            c.Attachments.Select(a => a.FileUrl).ToList()
+            c.Attachments.Select(a => new AttachmentResponseDto(
+                a.Id,
+                a.Filename,
+                a.FileUrl,
+                a.FileSize,
+                a.ContentType,
+                a.UploadedAt
+            )).ToList()
         )).OrderBy(c => c.CreatedAt).ToList();
-
         return new IssueDetailResponse(
             issue.Id,
             issue.ProjectId,

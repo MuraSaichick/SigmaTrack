@@ -1,8 +1,5 @@
 ﻿using SigmaTrack.Domain.Enums;
 using SigmaTrack.Domain.Exceptions;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SigmaTrack.Domain.Entities
 {
@@ -50,7 +47,12 @@ namespace SigmaTrack.Domain.Entities
 
             Status = SprintStatus.Active;
         }
-
+        public void RecalculateCommittedPoints()
+        {
+            CommittedPoints = Issues
+                .Where(i => i.StoryPoints.HasValue)
+                .Sum(i => i.StoryPoints!.Value);
+        }
         public void Complete()
         {
             if (Status != SprintStatus.Active)
@@ -60,10 +62,47 @@ namespace SigmaTrack.Domain.Entities
 
             Status = SprintStatus.Completed;
             CompletedAt = DateTime.UtcNow;
+            UpdateMetrics();
+        }
+
+        public void Cancel()
+        {
+            if (Status != SprintStatus.Active && Status != SprintStatus.Planning)
+            {
+                throw new DomainException("Можно отменить только активный или планируемый спринт.");
+            }
+
+            Status = SprintStatus.Cancelled;
+            CompletedAt = DateTime.UtcNow;
+            UpdateMetrics();
+            var activeIssues = Issues
+                .Where(i => i.Status != IssueStatus.Closed && i.Status != IssueStatus.Resolved)
+                .ToList();
+            foreach (var issue in activeIssues)
+            {
+                Issues.Remove(issue);
+            }
+        }
+        private void UpdateMetrics()
+        {
+            RecalculateCommittedPoints();
             CompletedPoints = Issues
-                .Where(i => i.Status == IssueStatus.Closed && i.StoryPoints.HasValue)
+                .Where(i => (i.Status == IssueStatus.Closed || i.Status == IssueStatus.Resolved) && i.StoryPoints.HasValue)
                 .Sum(i => i.StoryPoints!.Value);
         }
-    }
+        public void RemoveIssue(Issue issue)
+        {
+            if (Status == SprintStatus.Completed || Status == SprintStatus.Cancelled)
+            {
+                throw new DomainException("Нельзя удалять задачи из завершенного или отмененного спринта.");
+            }
 
+            if (!Issues.Contains(issue))
+            {
+                throw new DomainException("Эта задача не принадлежит данному спринту.");
+            }
+            Issues.Remove(issue);
+            RecalculateCommittedPoints();
+        }
+    }
 }

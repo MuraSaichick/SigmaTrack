@@ -18,6 +18,8 @@ namespace SigmaTrack.Domain.Entities
         public ICollection<ProjectMember> ProjectMembers { get; set; } = new List<ProjectMember>();
         public ICollection<Issue> Issues { get; set; } = new List<Issue>();
         public ICollection<ProjectInvitation> Invitations { get; set; } = new List<ProjectInvitation>();
+        public ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();
+        public ICollection<Sprint> Sprints { get; set; } = new List<Sprint>();
         public bool CanBeDeletedBy(Guid userId)
         {
             return CreatorId == userId;

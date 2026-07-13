@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { useProjectsStore } from '~/stores/projects'
+import { useProjectsStore } from '~/stores/useProjectsStore'
 import type { ProjectMemberDto } from '~/types/projects'
 
 const toast = useToast()

@@ -13,8 +13,8 @@ using SigmaTrack.Infrastructure.Data;
 namespace SigmaTrack.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260701171653_InitialDb")]
-    partial class InitialDb
+    [Migration("20260712093556_addFeatureSprint")]
+    partial class addFeatureSprint
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -33,41 +33,7 @@ namespace SigmaTrack.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("FileUrl")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("file_url");
-
-                    b.Property<string>("Filename")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("filename");
-
-                    b.Property<Guid>("IssueId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("issue_id");
-
-                    b.Property<DateTime>("UploadedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("uploaded_at");
-
-                    b.HasKey("Id")
-                        .HasName("pk_attachments");
-
-                    b.HasIndex("IssueId")
-                        .HasDatabaseName("ix_attachments_issue_id");
-
-                    b.ToTable("attachments", (string)null);
-                });
-
-            modelBuilder.Entity("SigmaTrack.Domain.Entities.CommentAttachment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("CommentId")
+                    b.Property<Guid?>("CommentId")
                         .HasColumnType("uuid")
                         .HasColumnName("comment_id");
 
@@ -90,24 +56,94 @@ namespace SigmaTrack.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("filename");
 
-                    b.Property<Guid?>("IssueCommentId")
+                    b.Property<Guid?>("IssueId")
                         .HasColumnType("uuid")
-                        .HasColumnName("issue_comment_id");
+                        .HasColumnName("issue_id");
+
+                    b.Property<Guid?>("ProjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_id");
 
                     b.Property<DateTime>("UploadedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("uploaded_at");
 
                     b.HasKey("Id")
-                        .HasName("pk_comment_attachments");
+                        .HasName("pk_attachments");
 
                     b.HasIndex("CommentId")
-                        .HasDatabaseName("ix_comment_attachments_comment_id");
+                        .HasDatabaseName("ix_attachments_comment_id");
 
-                    b.HasIndex("IssueCommentId")
-                        .HasDatabaseName("ix_comment_attachments_issue_comment_id");
+                    b.HasIndex("IssueId")
+                        .HasDatabaseName("ix_attachments_issue_id");
 
-                    b.ToTable("comment_attachments", (string)null);
+                    b.HasIndex("ProjectId")
+                        .HasDatabaseName("ix_attachments_project_id");
+
+                    b.ToTable("attachments", (string)null);
+                });
+
+            modelBuilder.Entity("SigmaTrack.Domain.Entities.Comment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("IsInternal")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_internal");
+
+                    b.Property<Guid?>("IssueId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("issue_id");
+
+                    b.PrimitiveCollection<List<string>>("Mentions")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("mentions");
+
+                    b.Property<Guid?>("ProjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_id");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("text");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UserProfileId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_profile_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_comments");
+
+                    b.HasIndex("AuthorId")
+                        .HasDatabaseName("ix_comments_author_id");
+
+                    b.HasIndex("IssueId")
+                        .HasDatabaseName("ix_comments_issue_id");
+
+                    b.HasIndex("ProjectId")
+                        .HasDatabaseName("ix_comments_project_id");
+
+                    b.HasIndex("UserProfileId")
+                        .HasDatabaseName("ix_comments_user_profile_id");
+
+                    b.ToTable("comments", (string)null);
                 });
 
             modelBuilder.Entity("SigmaTrack.Domain.Entities.GlobalRole", b =>
@@ -325,55 +361,6 @@ namespace SigmaTrack.Infrastructure.Migrations
                     b.ToTable("issues", (string)null);
                 });
 
-            modelBuilder.Entity("SigmaTrack.Domain.Entities.IssueComment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("AuthorId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("author_id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<bool>("IsInternal")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_internal");
-
-                    b.Property<Guid>("IssueId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("issue_id");
-
-                    b.PrimitiveCollection<List<string>>("Mentions")
-                        .IsRequired()
-                        .HasColumnType("text[]")
-                        .HasColumnName("mentions");
-
-                    b.Property<string>("Text")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("text");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("Id")
-                        .HasName("pk_comments");
-
-                    b.HasIndex("AuthorId")
-                        .HasDatabaseName("ix_comments_author_id");
-
-                    b.HasIndex("IssueId")
-                        .HasDatabaseName("ix_comments_issue_id");
-
-                    b.ToTable("comments", (string)null);
-                });
-
             modelBuilder.Entity("SigmaTrack.Domain.Entities.IssueHistory", b =>
                 {
                     b.Property<Guid>("Id")
@@ -448,9 +435,8 @@ namespace SigmaTrack.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("description");
 
-                    b.Property<string>("LinkType")
-                        .IsRequired()
-                        .HasColumnType("text")
+                    b.Property<int>("LinkType")
+                        .HasColumnType("integer")
                         .HasColumnName("link_type");
 
                     b.Property<Guid>("SourceIssueId")
@@ -891,12 +877,12 @@ namespace SigmaTrack.Infrastructure.Migrations
                         .HasColumnName("status");
 
                     b.HasKey("Id")
-                        .HasName("pk_sprint");
+                        .HasName("pk_sprints");
 
                     b.HasIndex("ProjectId")
-                        .HasDatabaseName("ix_sprint_project_id");
+                        .HasDatabaseName("ix_sprints_project_id");
 
-                    b.ToTable("sprint", (string)null);
+                    b.ToTable("sprints", (string)null);
                 });
 
             modelBuilder.Entity("SigmaTrack.Domain.Entities.User", b =>
@@ -1008,31 +994,59 @@ namespace SigmaTrack.Infrastructure.Migrations
 
             modelBuilder.Entity("SigmaTrack.Domain.Entities.Attachment", b =>
                 {
+                    b.HasOne("SigmaTrack.Domain.Entities.Comment", "Comment")
+                        .WithMany("Attachments")
+                        .HasForeignKey("CommentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_attachments_comments_comment_id");
+
                     b.HasOne("SigmaTrack.Domain.Entities.Issue", "Issue")
                         .WithMany("Attachments")
                         .HasForeignKey("IssueId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
                         .HasConstraintName("fk_attachments_issues_issue_id");
 
-                    b.Navigation("Issue");
-                });
-
-            modelBuilder.Entity("SigmaTrack.Domain.Entities.CommentAttachment", b =>
-                {
-                    b.HasOne("SigmaTrack.Domain.Entities.IssueComment", "Comment")
-                        .WithMany()
-                        .HasForeignKey("CommentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_comment_attachments_comments_comment_id");
-
-                    b.HasOne("SigmaTrack.Domain.Entities.IssueComment", null)
+                    b.HasOne("SigmaTrack.Domain.Entities.Project", "Project")
                         .WithMany("Attachments")
-                        .HasForeignKey("IssueCommentId")
-                        .HasConstraintName("fk_comment_attachments_comments_issue_comment_id");
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_attachments_projects_project_id");
 
                     b.Navigation("Comment");
+
+                    b.Navigation("Issue");
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("SigmaTrack.Domain.Entities.Comment", b =>
+                {
+                    b.HasOne("SigmaTrack.Domain.Entities.User", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_comments_users_author_id");
+
+                    b.HasOne("SigmaTrack.Domain.Entities.Issue", null)
+                        .WithMany("Comments")
+                        .HasForeignKey("IssueId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_comments_issues_issue_id");
+
+                    b.HasOne("SigmaTrack.Domain.Entities.Project", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_comments_projects_project_id");
+
+                    b.HasOne("SigmaTrack.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_comments_users_user_profile_id");
+
+                    b.Navigation("Author");
                 });
 
             modelBuilder.Entity("SigmaTrack.Domain.Entities.Issue", b =>
@@ -1066,7 +1080,8 @@ namespace SigmaTrack.Infrastructure.Migrations
                     b.HasOne("SigmaTrack.Domain.Entities.Sprint", "Sprint")
                         .WithMany("Issues")
                         .HasForeignKey("SprintId")
-                        .HasConstraintName("fk_issues_sprint_sprint_id");
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_issues_sprints_sprint_id");
 
                     b.Navigation("Assignee");
 
@@ -1077,27 +1092,6 @@ namespace SigmaTrack.Infrastructure.Migrations
                     b.Navigation("Reporter");
 
                     b.Navigation("Sprint");
-                });
-
-            modelBuilder.Entity("SigmaTrack.Domain.Entities.IssueComment", b =>
-                {
-                    b.HasOne("SigmaTrack.Domain.Entities.User", "Author")
-                        .WithMany("Comments")
-                        .HasForeignKey("AuthorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_comments_users_author_id");
-
-                    b.HasOne("SigmaTrack.Domain.Entities.Issue", "Issue")
-                        .WithMany("Comments")
-                        .HasForeignKey("IssueId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_comments_issues_issue_id");
-
-                    b.Navigation("Author");
-
-                    b.Navigation("Issue");
                 });
 
             modelBuilder.Entity("SigmaTrack.Domain.Entities.IssueHistory", b =>
@@ -1297,11 +1291,11 @@ namespace SigmaTrack.Infrastructure.Migrations
             modelBuilder.Entity("SigmaTrack.Domain.Entities.Sprint", b =>
                 {
                     b.HasOne("SigmaTrack.Domain.Entities.Project", "Project")
-                        .WithMany()
+                        .WithMany("Sprints")
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_sprint_projects_project_id");
+                        .HasConstraintName("fk_sprints_projects_project_id");
 
                     b.Navigation("Project");
                 });
@@ -1316,6 +1310,11 @@ namespace SigmaTrack.Infrastructure.Migrations
                         .HasConstraintName("fk_users_global_roles_role_id");
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("SigmaTrack.Domain.Entities.Comment", b =>
+                {
+                    b.Navigation("Attachments");
                 });
 
             modelBuilder.Entity("SigmaTrack.Domain.Entities.GlobalRole", b =>
@@ -1338,18 +1337,17 @@ namespace SigmaTrack.Infrastructure.Migrations
                     b.Navigation("Watchers");
                 });
 
-            modelBuilder.Entity("SigmaTrack.Domain.Entities.IssueComment", b =>
-                {
-                    b.Navigation("Attachments");
-                });
-
             modelBuilder.Entity("SigmaTrack.Domain.Entities.Project", b =>
                 {
+                    b.Navigation("Attachments");
+
                     b.Navigation("Invitations");
 
                     b.Navigation("Issues");
 
                     b.Navigation("ProjectMembers");
+
+                    b.Navigation("Sprints");
                 });
 
             modelBuilder.Entity("SigmaTrack.Domain.Entities.ProjectRole", b =>
@@ -1365,8 +1363,6 @@ namespace SigmaTrack.Infrastructure.Migrations
             modelBuilder.Entity("SigmaTrack.Domain.Entities.User", b =>
                 {
                     b.Navigation("AuditLogs");
-
-                    b.Navigation("Comments");
 
                     b.Navigation("IncomingInvitations");
 

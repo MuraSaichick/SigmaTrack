@@ -38,7 +38,7 @@ namespace SigmaTrack.Application.Features.Auth.Login
                 throw new UnauthorizedAccessException("Неверный логин или пароль.");
             }
             string token = _jwtProvider.GenerateToken(user);
-            return new LoginResponse(user.Id, token, user.Login, user.Email, user.Firstname);
+            return new LoginResponse(user.Id, token, user.Login, user.Email, user.Firstname, user.Lastname, user.AvatarUrl);
         }
     }
 }

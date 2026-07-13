@@ -11,6 +11,7 @@ namespace SigmaTrack.Application.Interfaces.Repositories
     {
         Task<Project?> GetByPrefixAsync(string prefix, CancellationToken cancellationToken);
         Task<Project?> GetByIdAsync(Guid projectId, CancellationToken cancellationToken);
+        Task<bool> ExistsAsync(Guid projectId, CancellationToken cancellationToken = default);
         Task<bool> IsProjectManagerOrCreatorAsync(Guid projectId, Guid userId, CancellationToken cancellationToken = default);
         Task<bool> IsProjectMemberAsync(Guid projectId, Guid userId, CancellationToken cancellationToken = default);
         Task<Project?> GetWithMembersByIdAsync(Guid id, CancellationToken cancellationToken = default);

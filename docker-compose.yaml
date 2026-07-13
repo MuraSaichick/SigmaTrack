@@ -4,6 +4,7 @@ networks:
 
 volumes:
   postgres_data:
+  sigmatrack_uploads:
 
 services:
   postgres:
@@ -33,6 +34,9 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=${BACKEND_ENV}
       - ConnectionStrings__DefaultConnection=Host=postgres;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}
+      - StorageSettings__LocalStoragePath=/app/uploads
+    volumes:
+      - sigmatrack_uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -46,6 +50,7 @@ services:
       dockerfile: Dockerfile 
     environment:
       - NODE_ENV=production
+      - NUXT_PUBLIC_API_BASE=http://localhost
     depends_on:
       - backend
     networks:
@@ -58,6 +63,7 @@ services:
       - "80:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - sigmatrack_uploads:/var/www/uploads:ro
     depends_on:
       - backend
       - frontend

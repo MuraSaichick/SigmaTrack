@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SigmaTrack.Application.Features.Profile.GetProfile;
 using SigmaTrack.Application.Features.Profile.UpdateProfile;
+using SigmaTrack.Application.Features.Profile.UploadAvatar;
 using SigmaTrack.WebApi.Extensions;
 using System.Security.Claims;
 
@@ -28,6 +29,14 @@ public class ProfileEndpoints : IEndpointModule
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status500InternalServerError);
+        group.MapPost("/avatar", UploadAvatarAsync)
+            .WithName("UploadAvatar")
+            .DisableAntiforgery()
+            .Produces<UploadAvatarResponse>(StatusCodes.Status200OK)
+            .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces<ProblemDetails>(StatusCodes.Status404NotFound)
+            .Produces<ProblemDetails>(StatusCodes.Status500InternalServerError);
     }
 
     private static async Task<IResult> GetProfileAsync(
@@ -66,6 +75,23 @@ public class ProfileEndpoints : IEndpointModule
         );
 
         var result = await useCase.ExecuteAsync(command, cancellationToken);
+        return Results.Ok(result);
+    }
+    private static async Task<IResult> UploadAvatarAsync(
+        IFormFile file,
+        [FromServices] IUploadAvatarUseCase useCase,
+        ClaimsPrincipal user,
+        CancellationToken cancellationToken)
+    {
+        var userId = user.GetUserId();
+        using var stream = file.OpenReadStream();
+        var request = new UploadAvatarRequest(
+            UserId: userId,
+            FileStream: stream,
+            FileName: file.FileName,
+            ContentType: file.ContentType
+        );
+        var result = await useCase.ExecuteAsync(request, cancellationToken);
         return Results.Ok(result);
     }
 }

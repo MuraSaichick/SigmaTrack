@@ -6,7 +6,6 @@ using SigmaTrack.Domain.Enums;
 
 namespace SigmaTrack.Application.Features.Issues.CreateIssue;
 public record CreateIssueRequest(
-    Guid ProjectId,
     string Title,
     string? Description,
     IssueType Type,

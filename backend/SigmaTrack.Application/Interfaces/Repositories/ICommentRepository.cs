@@ -7,6 +7,6 @@ namespace SigmaTrack.Application.Interfaces.Repositories
 {
    public interface ICommentRepository
     {
-        Task AddAsync(IssueComment comment, CancellationToken cancellationToken);
+        Task AddAsync(Comment comment, CancellationToken cancellationToken);
     }
 }

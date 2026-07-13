@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useProjectsStore } from '~/stores/projects'
+import { useProjectsStore } from '~/stores/useProjectsStore'
 import type { DropdownMenuItem } from '#ui/types'
 import type { CreateProjectRequest } from '~/types/projects'
 
+const config = useRuntimeConfig()
 const { t, locale } = useI18n()
 const route = useRoute()
 const { user, logout } = useAuth()
@@ -156,19 +157,22 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-50 flex transition-colors duration-300">
-    <header class="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800 px-4 flex items-center justify-between z-40">
+  <div
+    class="min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-50 flex transition-colors duration-300">
+    <header
+      class="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800 px-4 flex items-center justify-between z-40">
       <h1 class="text-xl font-black tracking-tight text-primary">
         SIGMA<span class="text-neutral-900 dark:text-white font-semibold">TRACK</span>
       </h1>
       <div class="flex items-center gap-2">
         <NotificationBell />
-        
-        <UButton :icon="isMobileMenuOpen ? 'i-lucide-x' : 'i-lucide-menu'" color="neutral" variant="ghost" @click="void (isMobileMenuOpen = !isMobileMenuOpen)" />
+
+        <UButton :icon="isMobileMenuOpen ? 'i-lucide-x' : 'i-lucide-menu'" color="neutral" variant="ghost"
+          @click="void (isMobileMenuOpen = !isMobileMenuOpen)" />
       </div>
     </header>
-
-    <aside :class="[isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0','fixed lg:sticky top-0 left-0 bottom-0 w-64 h-screen bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 flex flex-col p-4 z-50 transition-transform duration-300 ease-in-out lg:z-0']">
+    <aside
+      :class="[isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0', 'fixed lg:sticky top-0 left-0 bottom-0 w-64 h-screen bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 flex flex-col p-4 z-50 transition-transform duration-300 ease-in-out lg:z-0']">
       <div class="space-y-4 shrink-0 pb-2">
         <div class="hidden lg:block text-center pt-2">
           <h1 class="text-2xl font-black tracking-tight text-primary">
@@ -179,34 +183,43 @@ onMounted(async () => {
           </p>
         </div>
 
-        <div class="flex items-center gap-2 p-1 bg-neutral-50 dark:bg-neutral-800/40 rounded-2xl border border-neutral-100 dark:border-neutral-800/50">
-          <UDropdownMenu :items="profileDropdownItems" :content="{ side: 'bottom', align: 'start', sideOffset: 6 }" class="flex-1">
+        <div
+          class="flex items-center gap-2 p-1 bg-neutral-50 dark:bg-neutral-800/40 rounded-2xl border border-neutral-100 dark:border-neutral-800/50">
+          <UDropdownMenu :items="profileDropdownItems" :content="{ side: 'bottom', align: 'start', sideOffset: 6 }"
+            class="flex-1">
             <template #default>
-              <button class="flex-1 flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-neutral-200/50 dark:hover:bg-neutral-800 text-left transition-colors min-w-0 group">
-                <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary font-bold text-xs flex items-center justify-center shrink-0">
-                  {{ user?.firstname?.charAt(0).toUpperCase() }}
-                </div>
+              <button
+                class="flex-1 flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-neutral-200/50 dark:hover:bg-neutral-800 text-left transition-colors min-w-0 group">
+                <UAvatar
+                  :src="user?.avatarUrl ? (user.avatarUrl.startsWith('http') ? user.avatarUrl : `${config.public.apiBase}${user.avatarUrl}`) : undefined"
+                  :alt="`${user?.firstname} ${user?.lastname}`" size="sm"
+                  class="shrink-0 font-bold text-xs text-white rounded-lg" />
                 <div class="overflow-hidden flex-1">
-                  <p class="text-xs font-bold text-neutral-900 dark:text-white truncate group-hover:text-primary transition-colors">
-                    {{ user?.firstname }}
+                  <p
+                    class="text-xs font-bold text-neutral-900 dark:text-white truncate group-hover:text-primary transition-colors">
+                    {{ user?.firstname }} {{ user?.lastname }}
                   </p>
                   <p class="text-[10px] text-neutral-400 dark:text-neutral-500 truncate">
-                    {{ selectedProject ? $t(`projectRoles.${selectedProject.currentUserRole}`) : $t('globalRoles.user') }}
+                    {{ selectedProject ? $t(`projectRoles.${selectedProject.currentUserRole}`) : $t('globalRoles.user')
+                    }}
                   </p>
                 </div>
-                <UIcon name="i-lucide-chevron-down" class="w-3 h-3 text-neutral-400 shrink-0 mr-1 group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
+                <UIcon name="i-lucide-chevron-down"
+                  class="w-3 h-3 text-neutral-400 shrink-0 mr-1 group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
               </button>
             </template>
           </UDropdownMenu>
-
           <NotificationBell />
         </div>
       </div>
 
       <div class="flex-1 overflow-y-auto pr-1 space-y-4">
         <nav class="space-y-1 mt-2">
-          <NuxtLink v-for="item in globalMenuItems" :key="item.to" :to="item.to" class="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800/60 hover:text-neutral-900 dark:hover:text-white transition-all group" active-class="!bg-primary/10 !text-primary font-bold">
-            <UIcon :name="item.icon" class="w-5 h-5 text-neutral-400 group-hover:text-neutral-600 group-[.router-link-active]:text-primary" />
+          <NuxtLink v-for="item in globalMenuItems" :key="item.to" :to="item.to"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800/60 hover:text-neutral-900 dark:hover:text-white transition-all group"
+            active-class="!bg-primary/10 !text-primary font-bold">
+            <UIcon :name="item.icon"
+              class="w-5 h-5 text-neutral-400 group-hover:text-neutral-600 group-[.router-link-active]:text-primary" />
             {{ item.label }}
           </NuxtLink>
         </nav>
@@ -214,37 +227,45 @@ onMounted(async () => {
         <hr class="border-neutral-200 dark:border-neutral-800" />
 
         <div class="space-y-1.5">
-          <label class="text-[11px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-1 block">
+          <label
+            class="text-[11px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-1 block">
             {{ $t('projects.select') }}
           </label>
 
           <USelectMenu v-model="selectedProject" :items="projectItems" class="w-full" size="md" />
-          
+
           <UModal v-model:open="isProjectModalOpen">
             <template #default>
-              <UButton color="neutral" variant="ghost" size="xs" icon="i-lucide-plus" class="w-full justify-start text-neutral-500 hover:text-neutral-900 dark:hover:text-white mt-1 px-1 rounded-lg">
+              <UButton color="neutral" variant="ghost" size="xs" icon="i-lucide-plus"
+                class="w-full justify-start text-neutral-500 hover:text-neutral-900 dark:hover:text-white mt-1 px-1 rounded-lg">
                 Создать новый проект
               </UButton>
             </template>
 
             <template #content>
-              <div class="p-6 space-y-4 w-full max-w-md bg-white dark:bg-neutral-950 rounded-2xl border border-neutral-200 dark:border-neutral-800">
+              <div
+                class="p-6 space-y-4 w-full max-w-md bg-white dark:bg-neutral-950 rounded-2xl border border-neutral-200 dark:border-neutral-800">
                 <div>
                   <h3 class="text-lg font-bold text-neutral-900 dark:text-white">Создание нового проекта</h3>
-                  <p class="text-xs text-neutral-400 dark:text-neutral-500">Заполните данные для инициализации рабочего пространства</p>
+                  <p class="text-xs text-neutral-400 dark:text-neutral-500">Заполните данные для инициализации рабочего
+                    пространства</p>
                 </div>
 
                 <form @submit.prevent="handleCreateProject" class="space-y-4">
                   <UFormField label="Название проекта">
-                    <UInput v-model="newProjectForm.name" placeholder="Например, SigmaTrack Frontend" class="w-full" required :disabled="isCreating" />
+                    <UInput v-model="newProjectForm.name" placeholder="Например, SigmaTrack Frontend" class="w-full"
+                      required :disabled="isCreating" />
                   </UFormField>
 
                   <UFormField label="Префикс задач" hint="Короткий код (2-5 символов)">
-                    <UInput v-model="newProjectForm.prefix" placeholder="Например, SIG" class="w-full" maxlength="5" required :disabled="isCreating" @input="newProjectForm.prefix = newProjectForm.prefix.toUpperCase()" />
+                    <UInput v-model="newProjectForm.prefix" placeholder="Например, SIG" class="w-full" maxlength="5"
+                      required :disabled="isCreating"
+                      @input="newProjectForm.prefix = newProjectForm.prefix.toUpperCase()" />
                   </UFormField>
 
                   <UFormField label="Описание (необязательно)">
-                    <UTextarea v-model="newProjectForm.description" placeholder="Краткое описание целей проекта..." class="w-full" :disabled="isCreating" :rows="3" />
+                    <UTextarea v-model="newProjectForm.description" placeholder="Краткое описание целей проекта..."
+                      class="w-full" :disabled="isCreating" :rows="3" />
                   </UFormField>
 
                   <div class="flex justify-end gap-2 pt-2 border-t border-neutral-100 dark:border-neutral-900">
@@ -258,19 +279,24 @@ onMounted(async () => {
           </UModal>
         </div>
         <nav v-if="selectedProject" class="pt-2 space-y-1">
-          <label class="text-[10px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-3 block mb-2 truncate">
+          <label
+            class="text-[10px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-3 block mb-2 truncate">
             Меню проекта: {{ selectedProject.name }}
           </label>
-          <NuxtLink v-for="item in projectMenuItems" :key="item.to" :to="item.to" class="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800/60 hover:text-neutral-900 dark:hover:text-white transition-all group" active-class="!bg-primary/10 !text-primary font-bold">
-            <UIcon :name="item.icon" class="w-5 h-5 text-neutral-400 group-hover:text-neutral-600 group-[.router-link-active]:text-primary" />
+          <NuxtLink v-for="item in projectMenuItems" :key="item.to" :to="item.to"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800/60 hover:text-neutral-900 dark:hover:text-white transition-all group"
+            active-class="!bg-primary/10 !text-primary font-bold">
+            <UIcon :name="item.icon"
+              class="w-5 h-5 text-neutral-400 group-hover:text-neutral-600 group-[.router-link-active]:text-primary" />
             {{ item.label }}
           </NuxtLink>
         </nav>
       </div>
     </aside>
 
-    <div v-if="isMobileMenuOpen" class="fixed inset-0 bg-neutral-950/40 backdrop-blur-xs z-30 lg:hidden" @click="isMobileMenuOpen = false" />
-    
+    <div v-if="isMobileMenuOpen" class="fixed inset-0 bg-neutral-950/40 backdrop-blur-xs z-30 lg:hidden"
+      @click="isMobileMenuOpen = false" />
+
     <main class="flex-1 flex flex-col min-w-0 pt-16 lg:pt-0">
       <div class="p-6 lg:p-8 flex-1 max-w-[1600px] w-full mx-auto">
         <slot />

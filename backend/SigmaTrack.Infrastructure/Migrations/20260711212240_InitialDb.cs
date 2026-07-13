@@ -357,38 +357,19 @@ namespace SigmaTrack.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "attachments",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    issue_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    filename = table.Column<string>(type: "text", nullable: false),
-                    file_url = table.Column<string>(type: "text", nullable: false),
-                    uploaded_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_attachments", x => x.id);
-                    table.ForeignKey(
-                        name: "fk_attachments_issues_issue_id",
-                        column: x => x.issue_id,
-                        principalTable: "issues",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "comments",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
-                    issue_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    author_id = table.Column<Guid>(type: "uuid", nullable: false),
                     text = table.Column<string>(type: "text", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    author_id = table.Column<Guid>(type: "uuid", nullable: false),
                     is_internal = table.Column<bool>(type: "boolean", nullable: false),
-                    mentions = table.Column<List<string>>(type: "text[]", nullable: false)
+                    mentions = table.Column<List<string>>(type: "text[]", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    issue_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    project_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    user_profile_id = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -400,11 +381,23 @@ namespace SigmaTrack.Infrastructure.Migrations
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
+                        name: "fk_comments_projects_project_id",
+                        column: x => x.project_id,
+                        principalTable: "projects",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
                         name: "fk_comments_users_author_id",
                         column: x => x.author_id,
                         principalTable: "users",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_comments_users_user_profile_id",
+                        column: x => x.user_profile_id,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -449,7 +442,7 @@ namespace SigmaTrack.Infrastructure.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     source_issue_id = table.Column<Guid>(type: "uuid", nullable: false),
                     target_issue_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    link_type = table.Column<string>(type: "text", nullable: false),
+                    link_type = table.Column<int>(type: "integer", nullable: false),
                     description = table.Column<string>(type: "text", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     created_by = table.Column<Guid>(type: "uuid", nullable: false),
@@ -505,32 +498,40 @@ namespace SigmaTrack.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "comment_attachments",
+                name: "attachments",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
-                    comment_id = table.Column<Guid>(type: "uuid", nullable: false),
                     filename = table.Column<string>(type: "text", nullable: false),
                     file_url = table.Column<string>(type: "text", nullable: false),
                     file_size = table.Column<long>(type: "bigint", nullable: false),
                     content_type = table.Column<string>(type: "text", nullable: false),
                     uploaded_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    issue_comment_id = table.Column<Guid>(type: "uuid", nullable: true)
+                    comment_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    issue_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    project_id = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_comment_attachments", x => x.id);
+                    table.PrimaryKey("pk_attachments", x => x.id);
                     table.ForeignKey(
-                        name: "fk_comment_attachments_comments_comment_id",
+                        name: "fk_attachments_comments_comment_id",
                         column: x => x.comment_id,
                         principalTable: "comments",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "fk_comment_attachments_comments_issue_comment_id",
-                        column: x => x.issue_comment_id,
-                        principalTable: "comments",
-                        principalColumn: "id");
+                        name: "fk_attachments_issues_issue_id",
+                        column: x => x.issue_id,
+                        principalTable: "issues",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "fk_attachments_projects_project_id",
+                        column: x => x.project_id,
+                        principalTable: "projects",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.InsertData(
@@ -554,19 +555,19 @@ namespace SigmaTrack.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "ix_attachments_comment_id",
+                table: "attachments",
+                column: "comment_id");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_attachments_issue_id",
                 table: "attachments",
                 column: "issue_id");
 
             migrationBuilder.CreateIndex(
-                name: "ix_comment_attachments_comment_id",
-                table: "comment_attachments",
-                column: "comment_id");
-
-            migrationBuilder.CreateIndex(
-                name: "ix_comment_attachments_issue_comment_id",
-                table: "comment_attachments",
-                column: "issue_comment_id");
+                name: "ix_attachments_project_id",
+                table: "attachments",
+                column: "project_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_comments_author_id",
@@ -577,6 +578,16 @@ namespace SigmaTrack.Infrastructure.Migrations
                 name: "ix_comments_issue_id",
                 table: "comments",
                 column: "issue_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_comments_project_id",
+                table: "comments",
+                column: "project_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_comments_user_profile_id",
+                table: "comments",
+                column: "user_profile_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_issue_histories_changed_by",
@@ -714,9 +725,6 @@ namespace SigmaTrack.Infrastructure.Migrations
         {
             migrationBuilder.DropTable(
                 name: "attachments");
-
-            migrationBuilder.DropTable(
-                name: "comment_attachments");
 
             migrationBuilder.DropTable(
                 name: "issue_histories");

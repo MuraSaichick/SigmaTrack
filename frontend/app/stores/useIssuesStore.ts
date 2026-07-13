@@ -1,5 +1,8 @@
+import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import type {
+  AttachmentInput,
+  CommentResponseDto,
   CreateIssueRequest,
   CreateIssueResponse,
   GetIssuesListQuery,
@@ -7,37 +10,35 @@ import type {
   IssueDto,
   IssueStatus,
   UpdateIssueRequest,
-  UserActiveIssueResponse
+  UserActiveIssueResponse,
+  ChangeStatusRequest,
+  AssignIssueRequest,
+  AddCommentRequest,
+  MessageResponse,
+  PagedListResponse
 } from '~/types/issue'
 
 export const useIssuesStore = defineStore('issues', () => {
-  const {
-    getIssues,
-    getIssueById,
-    createIssue,
-    updateStatus,
-    updateAssignee,
-    updateIssueDetails,
-    addComment: apiAddComment,
-    getUserActiveIssues
-  } = useIssues()
+  const apiFetch = useApi()
   const toast = useToast()
 
   const issuesList = ref<IssueDto[]>([])
   const totalCount = ref(0)
   const currentIssue = ref<IssueDetailResponse | null>(null)
+  const activeIssues = ref<UserActiveIssueResponse[]>([])
+  
   const isLoadingList = ref(false)
   const isLoadingDetail = ref(false)
+  const isLoadingActive = ref(false)
   const isSubmitting = ref(false)
   const isAddingComment = ref(false)
-
-  const activeIssues = ref<UserActiveIssueResponse[]>([])
-  const isLoadingActive = ref(false)
 
   const fetchUserActiveIssues = async (userId: string) => {
     isLoadingActive.value = true
     try {
-      activeIssues.value = await getUserActiveIssues(userId)
+      activeIssues.value = await apiFetch<UserActiveIssueResponse[]>(`/api/issues/users/${userId}/active-issues`, {
+        method: 'GET'
+      })
     } catch (error: any) {
       activeIssues.value = []
       toast.add({
@@ -52,11 +53,14 @@ export const useIssuesStore = defineStore('issues', () => {
 
   const fetchIssues = async (
     projectId: string,
-    params: Omit<GetIssuesListQuery, 'projectId'> = {}
+    params?: GetIssuesListQuery
   ) => {
     isLoadingList.value = true
     try {
-      const data = await getIssues(projectId, params)
+      const data = await apiFetch<PagedListResponse<IssueDto>>(`/api/projects/${projectId}/issues`, {
+        method: 'GET',
+        query: params
+      })
       issuesList.value = data.items
       totalCount.value = data.totalCount
     } catch (error: any) {
@@ -75,7 +79,9 @@ export const useIssuesStore = defineStore('issues', () => {
   const fetchIssueById = async (id: string) => {
     isLoadingDetail.value = true
     try {
-      currentIssue.value = await getIssueById(id)
+      currentIssue.value = await apiFetch<IssueDetailResponse>(`/api/issues/${id}`, {
+        method: 'GET'
+      })
     } catch (error: any) {
       currentIssue.value = null
       toast.add({
@@ -87,40 +93,50 @@ export const useIssuesStore = defineStore('issues', () => {
       isLoadingDetail.value = false
     }
   }
+  const create = async (
+    projectId: string, 
+    body: CreateIssueRequest
+  ): Promise<CreateIssueResponse | null> => {
+    isSubmitting.value = true
+    try {
+      const payload = {
+        ...body,
+        tags: body.tags || []
+      }
 
-const create = async (body: CreateIssueRequest): Promise<CreateIssueResponse | null> => {
-  isSubmitting.value = true
-  try {
-    const payload: CreateIssueRequest = {
-      ...body,
-      tags: body.tags || []
+      const result = await apiFetch<CreateIssueResponse>(`/api/projects/${projectId}/issues`, {
+        method: 'POST',
+        body: payload
+      })
+      toast.add({
+        title: 'Успех',
+        description: `Задача #${result.number} создана`,
+        color: 'success'
+      })
+      return result
+    } catch (error: any) {
+      toast.add({
+        title: 'Ошибка',
+        description: error.data?.message || 'Не удалось создать задачу',
+        color: 'error'
+      })
+      return null
+    } finally {
+      isSubmitting.value = false
     }
-
-    const result = await createIssue(payload)
-    
-    toast.add({
-      title: 'Успех',
-      description: `Задача #${result.number} создана`,
-      color: 'success'
-    })
-    return result
-  } catch (error: any) {
-    toast.add({
-      title: 'Ошибка',
-      description: error.data?.message || 'Не удалось создать задачу',
-      color: 'error'
-    })
-    return null
-  } finally {
-    isSubmitting.value = false
   }
-}
+
   const changeStatus = async (id: string, status: IssueStatus): Promise<boolean> => {
     try {
-      await updateStatus(id, status)
+      await apiFetch<MessageResponse>(`/api/issues/${id}/status`, {
+        method: 'PUT',
+        body: { newStatus: status } satisfies ChangeStatusRequest
+      })
+
       if (currentIssue.value?.id === id) {
         currentIssue.value = { ...currentIssue.value, status }
       }
+      
       toast.add({
         title: 'Успех',
         description: 'Статус задачи обновлён',
@@ -139,10 +155,15 @@ const create = async (body: CreateIssueRequest): Promise<CreateIssueResponse | n
 
   const assign = async (id: string, assigneeId: string | null): Promise<boolean> => {
     try {
-      await updateAssignee(id, assigneeId)
+      await apiFetch<MessageResponse>(`/api/issues/${id}/assignee`, {
+        method: 'PUT',
+        body: { assigneeId } satisfies AssignIssueRequest
+      })
+
       if (currentIssue.value?.id === id) {
-        currentIssue.value = await getIssueById(id)
+        currentIssue.value = await apiFetch<IssueDetailResponse>(`/api/issues/${id}`, { method: 'GET' })
       }
+
       toast.add({
         title: 'Успех',
         description: 'Исполнитель задачи обновлён',
@@ -162,8 +183,12 @@ const create = async (body: CreateIssueRequest): Promise<CreateIssueResponse | n
   const updateDetails = async (id: string, body: UpdateIssueRequest): Promise<boolean> => {
     isSubmitting.value = true
     try {
-      await updateIssueDetails(id, body)
-      await fetchIssueById(id)
+      await apiFetch<MessageResponse>(`/api/issues/${id}`, {
+        method: 'PUT',
+        body
+      })
+      currentIssue.value = await apiFetch<IssueDetailResponse>(`/api/issues/${id}`, { method: 'GET' })
+      
       toast.add({
         title: 'Успех',
         description: 'Данные задачи обновлены',
@@ -182,22 +207,28 @@ const create = async (body: CreateIssueRequest): Promise<CreateIssueResponse | n
     }
   }
 
-  const clearCurrentIssue = () => {
-    currentIssue.value = null
-  }
-
-  const postComment = async (id: string, text: string, isInternal: boolean = false): Promise<boolean> => {
+  const postComment = async (
+    id: string, 
+    text: string, 
+    isInternal: boolean = false, 
+    attachments: AttachmentInput[] = []
+  ): Promise<boolean> => {
     isAddingComment.value = true
     try {
-      await apiAddComment(id, {
-        text,
-        isInternal,
-        mentions: [],
-        attachments: []
+      await apiFetch<CommentResponseDto>(`/api/issues/${id}/comments`, {
+        method: 'POST',
+        body: {
+          text,
+          isInternal,
+          mentions: [],
+          attachments
+        } satisfies AddCommentRequest
       })
+
       if (currentIssue.value?.id === id) {
-        currentIssue.value = await getIssueById(id)
+        currentIssue.value = await apiFetch<IssueDetailResponse>(`/api/issues/${id}`, { method: 'GET' })
       }
+
       toast.add({
         title: 'Успех',
         description: 'Комментарий добавлен успешно',
@@ -215,24 +246,29 @@ const create = async (body: CreateIssueRequest): Promise<CreateIssueResponse | n
       isAddingComment.value = false
     }
   }
+
+  const clearCurrentIssue = () => {
+    currentIssue.value = null
+  }
+
   return {
     issuesList,
     totalCount,
     currentIssue,
+    activeIssues,
     isLoadingList,
     isLoadingDetail,
+    isLoadingActive,
     isSubmitting,
     isAddingComment,
     fetchIssues,
+    fetchUserActiveIssues,
     fetchIssueById,
     create,
     changeStatus,
     assign,
     updateDetails,
     clearCurrentIssue,
-    postComment,
-    activeIssues,
-    isLoadingActive,
-    fetchUserActiveIssues
+    postComment
   }
 })

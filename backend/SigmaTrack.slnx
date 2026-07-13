@@ -1,7 +1,7 @@
 <Solution>
   <Folder Name="/Элементы решения/">
     <File Path=".gitignore" />
-    <File Path="README.md" />
+    <File Path="BACKEND.md" />
   </Folder>
   <Project Path="SigmaTrack.Application/SigmaTrack.Application.csproj" />
   <Project Path="SigmaTrack.Domain/SigmaTrack.Domain.csproj" />

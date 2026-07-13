@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { useProjectsStore } from '~/stores/projects'
-import { useUsersStore } from '~/stores/users'
+import { useProjectsStore } from '~/stores/useProjectsStore'
+import { useUsersStore } from '~/stores/useUsersStore'
 import type { UpdateProjectDetailsRequest, UserSearchResultDto } from '~/types/projects'
 
 const { t } = useI18n()
@@ -168,8 +168,6 @@ const confirmKickMember = async () => {
         isActionProcessing.value = null
     }
 }
-
-// --- УДАЛЕНИЕ ПРОЕКТА ---
 const isDeleteModalOpen = ref(false)
 const deleteConfirmName = ref('')
 const isDeletingProject = ref(false)
@@ -332,7 +330,6 @@ onMounted(() => {
                                             @update:model-value="(roleId: any) => handleRoleChange(member.userId, roleId)"
                                             class="w-40" size="sm" />
                                             
-                                        <!-- МОДАЛКА УДАЛЕНИЯ УЧАСТНИКА (по аналогии со структурой из default.vue) -->
                                         <UModal v-model:open="isKickModalOpen">
                                             <template #default>
                                                 <UButton color="error" variant="soft" icon="i-lucide-user-x" size="sm"
@@ -387,7 +384,6 @@ onMounted(() => {
                         {{ $t('projectSettings.danger.desc') }}
                     </p>
                     <div class="pt-2">
-                        <!-- МОДАЛКА УДАЛЕНИЯ ВСЕГО ПРОЕКТА (по аналогии со структурой из default.vue) -->
                         <UModal v-model:open="isDeleteModalOpen">
                             <template #default>
                                 <UButton color="error" icon="i-lucide-trash-2" class="rounded-xl font-bold shadow-xs"

@@ -4,7 +4,7 @@ using SigmaTrack.Domain.Entities;
 using SigmaTrack.Domain.Enums;
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 using System.Text.Json;
 
 namespace SigmaTrack.Infrastructure.Data
@@ -20,8 +20,6 @@ namespace SigmaTrack.Infrastructure.Data
         public DbSet<ProjectRole> ProjectRoles => Set<ProjectRole>();
         public DbSet<Issue> Issues => Set<Issue>();
         public DbSet<IssueLink> IssueLinks => Set<IssueLink>();
-        public DbSet<IssueComment> Comments => Set<IssueComment>();
-        public DbSet<CommentAttachment> CommentAttachments => Set<CommentAttachment>();
         public DbSet<Attachment> Attachments => Set<Attachment>();
         public DbSet<IssueHistory> IssueHistories => Set<IssueHistory>();
         public DbSet<IssueWatcher> IssueWatchers => Set<IssueWatcher>();
@@ -29,6 +27,8 @@ namespace SigmaTrack.Infrastructure.Data
         public DbSet<ProjectCustomField> ProjectCustomFields => Set<ProjectCustomField>();
         public DbSet<Notification> Notifications => Set<Notification>();
         public DbSet<ProjectInvitation> ProjectInvitations => Set<ProjectInvitation>();
+        public DbSet<Comment> Comments => Set<Comment>();
+        public DbSet<Sprint> Sprints => Set<Sprint>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -41,8 +41,6 @@ namespace SigmaTrack.Infrastructure.Data
             modelBuilder.Entity<ProjectMember>().HasKey(pm => pm.Id);
             modelBuilder.Entity<Issue>().HasKey(i => i.Id);
             modelBuilder.Entity<IssueLink>().HasKey(il => il.Id);
-            modelBuilder.Entity<IssueComment>().HasKey(c => c.Id);
-            modelBuilder.Entity<CommentAttachment>().HasKey(ca => ca.Id);
             modelBuilder.Entity<Attachment>().HasKey(a => a.Id);
             modelBuilder.Entity<IssueHistory>().HasKey(ih => ih.Id);
             modelBuilder.Entity<IssueWatcher>().HasKey(iw => iw.Id);
@@ -50,12 +48,15 @@ namespace SigmaTrack.Infrastructure.Data
             modelBuilder.Entity<ProjectCustomField>().HasKey(pcf => pcf.Id);
             modelBuilder.Entity<Notification>().HasKey(n => n.Id);
             modelBuilder.Entity<ProjectInvitation>().HasKey(pi => pi.Id);
+            modelBuilder.Entity<Comment>().HasKey(c => c.Id);
+            modelBuilder.Entity<Sprint>().HasKey(s => s.Id);
 
             var listComparer = new ValueComparer<List<string>>(
                 (c1, c2) => c1!.SequenceEqual(c2!),
                 c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
                 c => c.ToList()
-                );
+            );
+
             var dictComparer = new ValueComparer<Dictionary<string, string>>(
                 (d1, d2) => d1!.Count == d2!.Count && !d1.Except(d2).Any(),
                 d => d.Aggregate(0, (a, p) => HashCode.Combine(a, p.Key.GetHashCode(), p.Value.GetHashCode())),
@@ -64,17 +65,6 @@ namespace SigmaTrack.Infrastructure.Data
 
             modelBuilder.Entity<Issue>(entity =>
             {
-                var listComparer = new ValueComparer<List<string>>(
-                    (c1, c2) => c1!.SequenceEqual(c2!),
-                    c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
-                    c => c.ToList()
-                );
-                var dictComparer = new ValueComparer<Dictionary<string, string>>(
-                    (d1, d2) => d1!.Count == d2!.Count && !d1.Except(d2).Any(),
-                    d => d.Aggregate(0, (a, p) => HashCode.Combine(a, p.Key.GetHashCode(), p.Value.GetHashCode())),
-                    d => d.ToDictionary(k => k.Key, v => v.Value)
-                );
-
                 entity.Property(e => e.Tags)
                     .HasColumnType("jsonb")
                     .HasDefaultValueSql("'[]'")
@@ -96,12 +86,6 @@ namespace SigmaTrack.Infrastructure.Data
 
             modelBuilder.Entity<IssueTemplate>(entity =>
             {
-                var listComparer = new ValueComparer<List<string>>(
-                    (c1, c2) => c1!.SequenceEqual(c2!),
-                    c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
-                    c => c.ToList()
-                );
-
                 entity.Property(e => e.Tags)
                     .HasColumnType("jsonb")
                     .HasDefaultValueSql("'[]'")
@@ -114,12 +98,6 @@ namespace SigmaTrack.Infrastructure.Data
 
             modelBuilder.Entity<ProjectCustomField>(entity =>
             {
-                var listComparer = new ValueComparer<List<string>>(
-                    (c1, c2) => c1!.SequenceEqual(c2!),
-                    c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
-                    c => c.ToList()
-                );
-
                 entity.Property(e => e.Options)
                     .HasColumnType("jsonb")
                     .HasDefaultValueSql("'[]'")
@@ -130,13 +108,11 @@ namespace SigmaTrack.Infrastructure.Data
                     .Metadata.SetValueComparer(listComparer);
             });
 
-
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Role)
                 .WithMany(r => r.Users)
                 .HasForeignKey(u => u.RoleId)
                 .OnDelete(DeleteBehavior.Restrict);
-
 
             modelBuilder.Entity<Project>()
                 .HasOne(p => p.Creator)
@@ -144,7 +120,6 @@ namespace SigmaTrack.Infrastructure.Data
                 .HasForeignKey(p => p.CreatorId)
                 .OnDelete(DeleteBehavior.Restrict);
 
- 
             modelBuilder.Entity<ProjectMember>()
                 .HasOne(pm => pm.Project)
                 .WithMany(p => p.ProjectMembers)
@@ -186,6 +161,12 @@ namespace SigmaTrack.Infrastructure.Data
                 .WithMany()
                 .HasForeignKey(i => i.BlockedByIssueId)
                 .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<Issue>()
+                .HasOne(i => i.Sprint)
+                .WithMany(s => s.Issues)
+                .HasForeignKey(i => i.SprintId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<IssueLink>()
                 .HasOne(il => il.SourceIssue)
@@ -197,30 +178,6 @@ namespace SigmaTrack.Infrastructure.Data
                 .HasOne(il => il.TargetIssue)
                 .WithMany(i => i.TargetRelations)
                 .HasForeignKey(il => il.TargetIssueId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<IssueComment>()
-                .HasOne(c => c.Author)
-                .WithMany(u => u.Comments)
-                .HasForeignKey(c => c.AuthorId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<IssueComment>()
-                .HasOne(c => c.Issue)
-                .WithMany(i => i.Comments)
-                .HasForeignKey(c => c.IssueId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<CommentAttachment>()
-                .HasOne(ca => ca.Comment)
-                .WithMany()
-                .HasForeignKey(ca => ca.CommentId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Attachment>()
-                .HasOne(a => a.Issue)
-                .WithMany(i => i.Attachments)
-                .HasForeignKey(a => a.IssueId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<IssueHistory>()
@@ -283,10 +240,66 @@ namespace SigmaTrack.Infrastructure.Data
                 .HasForeignKey(pi => pi.InviterId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Comment>(entity =>
+            {
+                entity.HasOne(c => c.Author)
+                    .WithMany()
+                    .HasForeignKey(c => c.AuthorId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne<Issue>()
+                    .WithMany(i => i.Comments)
+                    .HasForeignKey(c => c.IssueId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne<Project>()
+                    .WithMany()
+                    .HasForeignKey(c => c.ProjectId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne<User>()
+                    .WithMany()
+                    .HasForeignKey(c => c.UserProfileId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                entity.HasMany(c => c.Attachments)
+                .WithOne(a => a.Comment)
+                .HasForeignKey(a => a.CommentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+                entity.Navigation(c => c.Attachments)
+                    .HasField("_attachments")
+                    .UsePropertyAccessMode(PropertyAccessMode.Field);
+            });
+
+            modelBuilder.Entity<Attachment>(entity =>
+            {
+                entity.HasOne(a => a.Issue)
+                    .WithMany(i => i.Attachments)
+                    .HasForeignKey(a => a.IssueId)
+                    .IsRequired(false)
+                    .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(a => a.Comment)
+                    .WithMany(c => c.Attachments)
+                    .HasForeignKey(a => a.CommentId)
+                    .IsRequired(false)
+                    .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(a => a.Project)
+                    .WithMany(p => p.Attachments)
+                    .HasForeignKey(a => a.ProjectId)
+                    .IsRequired(false)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
             modelBuilder.Entity<GlobalRole>().HasData(
                 new GlobalRole { Id = (int)GlobalRoleEnum.Admin, Name = "Admin" },
                 new GlobalRole { Id = (int)GlobalRoleEnum.User, Name = "User" }
             );
+            modelBuilder.Entity<Sprint>(entity =>
+            {
+                entity.HasOne(s => s.Project)
+                    .WithMany(p => p.Sprints)
+                    .HasForeignKey(s => s.ProjectId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
 
             modelBuilder.Entity<ProjectRole>().HasData(
                 new ProjectRole

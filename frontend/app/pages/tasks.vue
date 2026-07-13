@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useIssuesStore } from '~/stores/issues'
-import { useProjectsStore } from '~/stores/projects'
+import { useIssuesStore } from '~/stores/useIssuesStore'
+import { useProjectsStore } from '~/stores/useProjectsStore'
 import { useAuth } from '~/composables/useAuth'
 import { getStatusConfig, getPriorityConfig, getTypeConfig } from '~/utils/IssueHelpers' 
 

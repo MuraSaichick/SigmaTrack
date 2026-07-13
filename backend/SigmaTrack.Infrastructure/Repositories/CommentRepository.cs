@@ -14,7 +14,7 @@ namespace SigmaTrack.Infrastructure.Repositories
         {
             _context = context;
         }
-        public async Task AddAsync(IssueComment comment, CancellationToken cancellationToken)
+        public async Task AddAsync(Comment comment, CancellationToken cancellationToken)
         {
             await _context.Comments.AddAsync(comment, cancellationToken);
         }

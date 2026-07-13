@@ -77,7 +77,16 @@ public class IssueRepository : IIssueRepository
     public async Task<Issue?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         return await _context.Issues
-            .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
+        .Include(i => i.Project)
+        .Include(i => i.Reporter)
+        .Include(i => i.Assignee)
+        .Include(i => i.SourceRelations)
+            .ThenInclude(r => r.TargetIssue)
+        .Include(i => i.Comments)
+            .ThenInclude(c => c.Author)
+        .Include(i => i.Comments)
+            .ThenInclude(c => c.Attachments)
+        .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
     }
     public async Task<Issue?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken)
     {
@@ -127,6 +136,12 @@ public class IssueRepository : IIssueRepository
                 i.AssigneeId,
                 i.UpdatedAt
             ))
+            .ToListAsync(cancellationToken);
+    }
+    public async Task<List<Issue>> GetIssuesByIdsAsync(Guid projectId, List<Guid> issueIds, CancellationToken cancellationToken = default)
+    {
+        return await _context.Issues
+            .Where(i => i.ProjectId == projectId && issueIds.Contains(i.Id))
             .ToListAsync(cancellationToken);
     }
 }

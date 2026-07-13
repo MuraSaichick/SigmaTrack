@@ -142,7 +142,6 @@ public class ProjectEndpoints : IEndpointModule
     {
         var command = new RemoveMemberCommand(projectId, userId);
         await useCase.ExecuteAsync(command, cancellationToken);
-
         return Results.Ok(new { message = "Участник успешно удален из проекта." });
     }
 

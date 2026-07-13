@@ -3,6 +3,7 @@ import { z } from 'zod'
 import type { FormSubmitEvent } from '#ui/types'
 import type { UpdateProfileRequest, UserProfileResponse } from '~/types/user'
 import { useProfile } from '~/composables/useProfile'
+import AvatarUploader from '~/components/profile/AvatarUploader.vue'
 
 const { getProfile, updateProfile } = useProfile()
 const auth = useAuth()
@@ -13,6 +14,12 @@ const isEditing = ref(false)
 const newSkill = ref('')
 
 const { data: profileData, error, refresh } = await useAsyncData<UserProfileResponse>('user-profile', () => getProfile())
+
+    watch(() => profileData.value?.avatarUrl, (newUrl) => {
+    if (newUrl && auth.user.value) {
+        auth.user.value.avatarUrl = newUrl
+    }
+})
 
 const schema = z.object({
     firstname: z.string().min(1, t('profile.validation.required')),
@@ -119,11 +126,7 @@ const onSubmit = async (event: FormSubmitEvent<any>) => {
             <UCard v-if="!isEditing" class="shadow-sm">
                 <template #header>
                     <div class="flex flex-col sm:flex-row items-center gap-4">
-                        <UAvatar
-                            :src="profileData.avatarUrl ? (profileData.avatarUrl.startsWith('http') ? profileData.avatarUrl : `http://localhost:5000${profileData.avatarUrl}`) : undefined"
-                            :alt="`${profileData.firstname} ${profileData.lastname}`" size="xl"
-                            class="text-xl font-bold text-white"
-                            :style="{ backgroundColor: !profileData.avatarUrl ? (profileData.avatarColor || '#3b82f6') : undefined }" />
+                        <AvatarUploader v-model="profileData.avatarUrl" @uploaded="refresh"/>
                         <div class="text-center sm:text-left flex-1 space-y-1">
                             <h2 class="text-xl font-bold text-gray-900 dark:text-white">
                                 {{ profileData.lastname }} {{ profileData.firstname }} {{ profileData.patronymic }}
@@ -200,10 +203,6 @@ const onSubmit = async (event: FormSubmitEvent<any>) => {
                     </div>
                 </div>
             </UCard>
-
-            <!-- ========================================== -->
-            <!--      2. РЕЖИМ РЕДАКТИРОВАНИЯ ПРОФИЛЯ       -->
-            <!-- ========================================== -->
             <UForm v-else :schema="schema" :state="state"
                 class="space-y-6 bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm"
                 @submit="onSubmit">

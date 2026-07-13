@@ -2,6 +2,7 @@
 import { storeToRefs } from 'pinia'
 import { IssueStatus } from '~/types/issue'
 import { getStatusConfig, getPriorityConfig, getTypeConfig } from '~/utils/IssueHelpers'
+import { useFileUploader } from '~/composables/useFileUploader'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -14,6 +15,19 @@ const { currentIssue, isLoadingDetail, isAddingComment } = storeToRefs(issuesSto
 
 const isUpdatingStatus = ref(false)
 const isUpdatingAssignee = ref(false)
+
+const { 
+  filesList, 
+  isAnyUploading, 
+  resultAttachments, 
+  uploadFile, 
+  removeFile, 
+  clearAll: clearUploadedFiles 
+} = useFileUploader('Comments')
+
+const handleFilesSelected = (files: File[]) => {
+  files.forEach(file => uploadFile(file))
+}
 
 const statusItems = Object.keys(IssueStatus)
   .filter(key => isNaN(Number(key))) 
@@ -103,12 +117,14 @@ const handleAddComment = async () => {
   const success = await issuesStore.postComment(
     issueId.value,
     commentText.value,
-    commentIsInternal.value
+    commentIsInternal.value,
+    resultAttachments.value
   )
 
   if (success) {
     commentText.value = ''
     commentIsInternal.value = false
+    clearUploadedFiles()
   }
 }
 </script>
@@ -251,6 +267,13 @@ const handleAddComment = async () => {
                   </span>
                 </div>
                 <p class="text-sm text-neutral-700 dark:text-neutral-300 ml-8 whitespace-pre-line">{{ comment.text }}</p>
+                
+                <div v-if="comment.attachments && comment.attachments.length" class="mt-2 ml-8 flex flex-wrap gap-2">
+                  <a v-for="file in comment.attachments" :key="file.fileUrl" :href="file.fileUrl" target="_blank" class="flex items-center gap-1.5 text-xs bg-neutral-50 dark:bg-neutral-900 px-2.5 py-1.5 border rounded-lg hover:bg-neutral-100 transition-colors">
+                    <span>📎</span>
+                    <span class="text-neutral-600 dark:text-neutral-400 font-medium truncate max-w-[150px]">{{ file.filename }}</span>
+                  </a>
+                </div>
               </div>
             </div>
           </UCard>
@@ -264,12 +287,19 @@ const handleAddComment = async () => {
 
             <div class="space-y-4">
               <UTextarea v-model="commentText" :placeholder="$t('issues.commentPlaceholder')" :rows="4" autoresize size="md" class="w-full" />
+              
+              <div class="space-y-3">
+                <SharedFileUploadZone @files-selected="handleFilesSelected" />
+                <SharedFileAttachmentList v-if="filesList.length" :files="filesList" @remove="removeFile" />
+              </div>
+
               <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
                 <label class="flex items-center gap-2 text-xs text-neutral-500 cursor-pointer select-none">
                   <input type="checkbox" v-model="commentIsInternal" class="rounded text-primary border-neutral-300 focus:ring-primary h-4 w-4" />
                   <span>{{ $t('issues.internalCommentLabel') }}</span>
                 </label>
-                <UButton icon="i-lucide-send" color="primary" class="rounded-xl font-bold justify-center px-5" :disabled="!commentText.trim()" :loading="isAddingComment" @click="handleAddComment">
+                
+                <UButton icon="i-lucide-send" color="primary" class="rounded-xl font-bold justify-center px-5" :disabled="!commentText.trim() || isAnyUploading" :loading="isAddingComment" @click="handleAddComment">
                   {{ $t('issues.sendCommentBtn') }}
                 </UButton>
               </div>

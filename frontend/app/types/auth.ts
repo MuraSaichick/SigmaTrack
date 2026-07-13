@@ -26,6 +26,8 @@ export interface LoginResponse {
   login: string
   email: string
   firstname: string
+  lastname: string
+  avatarUrl: string | null
 }
 
 export interface RegisterRequest {

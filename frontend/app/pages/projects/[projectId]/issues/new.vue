@@ -71,8 +71,9 @@ const assigneeOptions = computed(() => {
 })
 
 const handleSubmit = async () => {
-  const result = await issuesStore.create({
-    projectId: projectId.value,
+  const result = await issuesStore.create(
+    projectId.value,
+    {
     title: form.title,
     description: form.description || null,
     type: form.type,

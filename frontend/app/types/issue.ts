@@ -20,7 +20,6 @@ export interface PagedListResponse<T> {
 }
 
 export interface GetIssuesListQuery {
-  projectId: string
   status?: IssueStatus
   type?: IssueType
   priority?: IssuePriority
@@ -85,12 +84,11 @@ export interface IssueDetailResponse {
   blockReason: string | null
   blockedByIssueId: string | null
   viewCount: number
-  comments: CommentDto[]
+  comments: CommentResponseDto[]
   links: IssueLinkDto[]
 }
 
 export interface CreateIssueRequest {
-  projectId: string
   title: string
   description?: string | null
   type: IssueType

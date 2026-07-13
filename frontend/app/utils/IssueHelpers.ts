@@ -33,7 +33,7 @@ export const getPriorityConfig = (priority: number): PriorityConfig => {
     const map: Record<number, PriorityConfig> = {
         0: { label: 'Критический', color: 'error', icon: 'i-heroicons-chevron-double-up' },
         1: { label: 'Высокий', color: 'warning', icon: 'i-heroicons-chevron-up' },
-        2: { label: 'Средний', color: 'primary', icon: 'i-heroicons-bars-2' }, // Желтого цвета в стандартной схеме NuxtUiColor нет, заменен на primary
+        2: { label: 'Средний', color: 'primary', icon: 'i-heroicons-bars-2' }, 
         3: { label: 'Низкий', color: 'info', icon: 'i-heroicons-chevron-down' },
         4: { label: 'Trivial', color: 'neutral', icon: 'i-heroicons-chevron-double-down' }
     }
@@ -50,7 +50,7 @@ export const getTypeConfig = (type: number): TypeConfig => {
     const map: Record<number, TypeConfig> = {
         0: { label: 'Баг', icon: 'i-heroicons-bug-ant', color: 'error' },
         1: { label: 'Фича', icon: 'i-heroicons-sparkles', color: 'primary' },
-        2: { label: 'Улучшение', icon: 'i-heroicons-trending-up', color: 'secondary' }, // Фиолетового/purple нет, заменен на secondary
+        2: { label: 'Улучшение', icon: 'i-heroicons-trending-up', color: 'secondary' },
         3: { label: 'Задача', icon: 'i-heroicons-check-badge', color: 'info' }
     }
     return map[type] || { label: 'Задача', icon: 'i-heroicons-document', color: 'neutral' }

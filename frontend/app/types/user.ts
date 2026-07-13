@@ -27,7 +27,7 @@ export interface UpdateProfileRequest {
   position: string | null;
   department: string | null;
   skills: string[];
-  birthDate: string | null; // Отправляется в формате ISO строки (например, "1995-12-17") или null
+  birthDate: string | null;
   telegram: string | null;
   gitHub: string | null;
 }

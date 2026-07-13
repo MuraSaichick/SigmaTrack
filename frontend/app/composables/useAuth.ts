@@ -1,5 +1,5 @@
 import type { LoginResponse } from '~/types/auth'
-import { useProjectsStore } from '~/stores/projects'
+import { useProjectsStore } from '~/stores/useProjectsStore'
 
 export const useAuth = () => {
     const token = useCookie<string | null>('auth_token', { maxAge: 60 * 60 * 24 * 7 })
@@ -13,7 +13,9 @@ export const useAuth = () => {
             id: authData.id,
             login: authData.login,
             email: authData.email,
-            firstname: authData.firstname
+            firstname: authData.firstname,
+            lastname: authData.lastname,
+            avatarUrl: authData.avatarUrl
         }
     }
     const logout = () => {

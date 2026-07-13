@@ -11,12 +11,14 @@ public record AttachmentInput(
     long FileSize,
     string ContentType
 );
+
 public record AddCommentRequest(
     string Text,
     bool IsInternal,
     List<string>? Mentions,
     List<AttachmentInput>? Attachments
 );
+
 public record AddCommentCommand(
     Guid IssueId,
     Guid AuthorId,
@@ -46,10 +48,12 @@ public record CommentResponseDto(
     bool IsInternal,
     List<AttachmentResponseDto> Attachments
 );
+
 public interface IAddCommentUseCase
 {
     Task<CommentResponseDto> ExecuteAsync(AddCommentCommand command, CancellationToken cancellationToken);
 }
+
 public class AddCommentUseCase : IAddCommentUseCase
 {
     private readonly IIssueRepository _issueRepository;
@@ -75,6 +79,7 @@ public class AddCommentUseCase : IAddCommentUseCase
     public async Task<CommentResponseDto> ExecuteAsync(AddCommentCommand command, CancellationToken cancellationToken)
     {
         await _validator.ValidateAndThrowAsync(command, cancellationToken);
+
         var issueExists = await _issueRepository.ExistsAsync(command.IssueId, cancellationToken);
         if (!issueExists)
             throw new ArgumentException($"Задача с ID {command.IssueId} не найдена.");
@@ -82,41 +87,37 @@ public class AddCommentUseCase : IAddCommentUseCase
         var author = await _userRepository.GetByIdAsync(command.AuthorId, cancellationToken);
         if (author == null)
             throw new ArgumentException($"Пользователь с ID {command.AuthorId} не найден.");
-        var commentId = Guid.NewGuid();
-        var addedComment = new IssueComment
-        {
-            Id = commentId,
-            IssueId = command.IssueId,
-            AuthorId = command.AuthorId,
-            Text = command.Text.Trim(),
-            CreatedAt = DateTime.UtcNow,
-            IsInternal = command.IsInternal,
-            Mentions = command.Mentions ?? new List<string>(),
-            Attachments = command.Attachments?.Select(a => new CommentAttachment
-            {
-                Id = Guid.NewGuid(),
-                CommentId = commentId,
-                Filename = a.Filename,
-                FileUrl = a.FileUrl,
-                FileSize = a.FileSize,
-                ContentType = a.ContentType,
-                UploadedAt = DateTime.UtcNow
-            }).ToList() ?? new List<CommentAttachment>()
-        };
 
-        await _commentRepository.AddAsync(addedComment, cancellationToken);
+        var comment = Comment.CreateForIssue(
+            command.IssueId,
+            command.AuthorId,
+            command.Text,
+            command.IsInternal,
+            command.Mentions
+        );
+
+        if (command.Attachments != null && command.Attachments.Any())
+        {
+            var attachmentsData = command.Attachments
+        .Select(a => (a.Filename, a.FileUrl, a.FileSize, a.ContentType))
+        .ToList();
+            comment.AddAttachments(attachmentsData);
+        }
+
+        await _commentRepository.AddAsync(comment, cancellationToken);
         await _issueRepository.IncrementCommentCountAsync(command.IssueId, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
         return new CommentResponseDto(
-            addedComment.Id,
-            addedComment.AuthorId,
+            comment.Id,
+            comment.AuthorId,
             $"{author.Firstname} {author.Lastname}".Trim(),
             author.AvatarUrl,
             author.AvatarColor,
-            addedComment.Text,
-            addedComment.CreatedAt,
-            addedComment.IsInternal,
-            addedComment.Attachments.Select(a => new AttachmentResponseDto(
+            comment.Text,
+            comment.CreatedAt,
+            comment.IsInternal,
+            comment.Attachments.Select(a => new AttachmentResponseDto(
                 a.Id,
                 a.Filename,
                 a.FileUrl,
@@ -127,6 +128,7 @@ public class AddCommentUseCase : IAddCommentUseCase
         );
     }
 }
+
 public class AddCommentCommandValidator : AbstractValidator<AddCommentCommand>
 {
     public AddCommentCommandValidator()

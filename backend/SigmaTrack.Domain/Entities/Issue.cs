@@ -21,21 +21,21 @@ namespace SigmaTrack.Domain.Entities
         public User? Assignee { get; private set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
-        public DateTime? DueDate { get; set; } // Срок выполнения
-        public DateTime? StartedAt { get; set; } // Дата начала работы
-        public DateTime? ResolvedAt { get; set; } // Дата решения
-        public DateTime? ClosedAt { get; set; } // Дата закрытия
-        public int? StoryPoints { get; set; } // Оценка в story points
-        public double? EstimatedHours { get; set; } // Плановая оценка в часах
-        public double? LoggedHours { get; set; } // Фактически затрачено
-        public double? RemainingHours { get; set; } // Осталось часов
+        public DateTime? DueDate { get; set; }
+        public DateTime? StartedAt { get; set; }
+        public DateTime? ResolvedAt { get; set; }
+        public DateTime? ClosedAt { get; set; }
+        public int? StoryPoints { get; set; }
+        public double? EstimatedHours { get; set; }
+        public double? LoggedHours { get; set; }
+        public double? RemainingHours { get; set; }
         public IssuePriority Priority { get; set; }
         public IssueSeverity? Severity { get; set; }
-        public string? Component { get; set; } // Компонент системы
-        public string? Version { get; set; } // Версия, где найден баг
-        public string? FixVersion { get; set; } // Версия, где исправлен
-        public string? Environment { get; set; } // Окружение
-        public List<string> Tags { get; set; } = new(); // JSON-список тегов
+        public string? Component { get; set; }
+        public string? Version { get; set; }
+        public string? FixVersion { get; set; }
+        public string? Environment { get; set; }
+        public List<string> Tags { get; set; } = new();
         public Guid? SprintId { get; set; }
         public Sprint? Sprint { get; set; }
         public bool IsReproducible { get; set; } = true;
@@ -44,20 +44,24 @@ namespace SigmaTrack.Domain.Entities
         public string? BlockReason { get; set; }
         public Guid? BlockedByIssueId { get; set; }
         public Issue? BlockedByIssue { get; set; }
-        public TimeSpan? TimeToFirstResponse { get; set; } // Время до первого ответа
-        public TimeSpan? TimeToResolution { get; set; } // Время до решения
-        public int ViewCount { get; set; } // Количество просмотров
-        public int CommentCount { get; set; } // Количество комментариев (денормализация)
-        public string? Source { get; set; } // Источник задачи
-        public Dictionary<string, string> CustomFields { get; set; } = new(); // Кастомные поля
-        public ICollection<IssueComment> Comments { get; set; } = new List<IssueComment>();
+        public TimeSpan? TimeToFirstResponse { get; set; }
+        public TimeSpan? TimeToResolution { get; set; }
+        public int ViewCount { get; set; }
+        public int CommentCount { get; set; } // Денормализация
+        public string? Source { get; set; }
+        public Dictionary<string, string> CustomFields { get; set; } = new();
+
+        public ICollection<Comment> Comments { get; set; } = new List<Comment>();
+
         public ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();
+
         public ICollection<IssueHistory> Histories { get; set; } = new List<IssueHistory>();
         public ICollection<IssueLink> SourceRelations { get; set; } = new List<IssueLink>();
         public ICollection<IssueLink> TargetRelations { get; set; } = new List<IssueLink>();
         public ICollection<IssueWatcher> Watchers { get; set; } = new List<IssueWatcher>();
 
         private Issue() { }
+
         public Issue(
             Guid projectId,
             int number,
@@ -83,7 +87,7 @@ namespace SigmaTrack.Domain.Entities
             Type = type;
             ReporterId = reporterId;
             Priority = priority;
-            AssigneeId = assigneeId;    
+            AssigneeId = assigneeId;
             StoryPoints = storyPoints;
             Tags = tags ?? new List<string>();
             Status = IssueStatus.Backlog;
@@ -91,45 +95,27 @@ namespace SigmaTrack.Domain.Entities
             UpdatedAt = DateTime.UtcNow;
         }
 
-        public IssueComment AddComment(Guid authorId, string text, bool isInternal, List<string> mentions,
-    List<(string Filename, string FileUrl, long FileSize, string ContentType)> attachmentsData)
+        public Comment AddComment(
+            Guid authorId,
+            string text,
+            bool isInternal,
+            List<string> mentions,
+            List<(string Filename, string FileUrl, long FileSize, string ContentType)> attachmentsData)
         {
-            if (string.IsNullOrWhiteSpace(text))
-                throw new ArgumentException("Текст комментария не может быть пустым.");
+            var comment = Comment.CreateForIssue(this.Id, authorId, text, isInternal, mentions);
 
-            var comment = new IssueComment
+            if (attachmentsData != null && attachmentsData.Count > 0)
             {
-                Id = Guid.NewGuid(),
-                IssueId = this.Id,
-                AuthorId = authorId,
-                Text = text.Trim(),
-                CreatedAt = DateTime.UtcNow,
-                IsInternal = isInternal,
-                Mentions = mentions ?? new List<string>()
-            };
-
-            if (attachmentsData != null)
-            {
-                foreach (var data in attachmentsData)
-                {
-                    comment.Attachments.Add(new CommentAttachment
-                    {
-                        Id = Guid.NewGuid(),
-                        CommentId = comment.Id,
-                        Filename = data.Filename,
-                        FileUrl = data.FileUrl,
-                        FileSize = data.FileSize,
-                        ContentType = data.ContentType,
-                        UploadedAt = DateTime.UtcNow
-                    });
-                }
+                comment.AddAttachments(attachmentsData);
             }
 
             Comments.Add(comment);
             CommentCount++;
             UpdatedAt = DateTime.UtcNow;
+
             return comment;
         }
+
         public IssueLink AddLink(Guid targetIssueId, IssueLinkType linkType, string? description, Guid userId)
         {
             if (targetIssueId == Id)
@@ -145,7 +131,6 @@ namespace SigmaTrack.Domain.Entities
                 CreatedBy = userId
             };
             SourceRelations.Add(link);
-
             Histories.Add(new IssueHistory
             {
                 Id = Guid.NewGuid(),
@@ -158,9 +143,9 @@ namespace SigmaTrack.Domain.Entities
             });
 
             UpdatedAt = DateTime.UtcNow;
-
             return link;
         }
+
         public void ChangeStatus(IssueStatus newStatus)
         {
             if (Status == newStatus)
@@ -184,6 +169,7 @@ namespace SigmaTrack.Domain.Entities
             Status = newStatus;
             UpdatedAt = DateTime.UtcNow;
         }
+
         public void UpdateDetails(
             string title,
             string? description,
@@ -201,9 +187,9 @@ namespace SigmaTrack.Domain.Entities
             string? stepsToReproduce)
         {
             if (string.IsNullOrWhiteSpace(title))
-                throw new ArgumentException("Название задачи не может быть пустым.");
+                throw new DomainException("Название задачи не может быть пустым.");
             if (estimatedHours < 0 || remainingHours < 0)
-                throw new ArgumentException("Оценка часов не может быть отрицательной.");
+                throw new DomainException("Оценка часов не может быть отрицательной.");
             Title = title.Trim();
             Description = description?.Trim();
             Priority = priority;
@@ -221,6 +207,7 @@ namespace SigmaTrack.Domain.Entities
 
             UpdatedAt = DateTime.UtcNow;
         }
+
         public bool AssignTo(Guid? assigneeId)
         {
             if (AssigneeId == assigneeId)
@@ -229,6 +216,18 @@ namespace SigmaTrack.Domain.Entities
             AssigneeId = assigneeId;
             UpdatedAt = DateTime.UtcNow;
             return true;
+        }
+        public void AssignToSprint(Sprint sprint)
+        {
+            if (sprint.Status == SprintStatus.Completed || sprint.Status == SprintStatus.Cancelled)
+                throw new DomainException($"Нельзя добавить задачу в спринт со статусом {sprint.Status}.");
+            if (this.ProjectId != sprint.ProjectId)
+                throw new DomainException("Задача и спринт должны принадлежать одному проекту.");
+            SprintId = sprint.Id;
+            if (sprint.Issues != null && !sprint.Issues.Contains(this))
+            {
+                sprint.Issues.Add(this);
+            }
         }
     }
 }

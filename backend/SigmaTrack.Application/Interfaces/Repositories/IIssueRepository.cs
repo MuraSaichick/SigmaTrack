@@ -17,6 +17,7 @@ namespace SigmaTrack.Application.Interfaces.Repositories
         Task<Issue?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken);
         Task IncrementCommentCountAsync(Guid issueId, CancellationToken cancellationToken);
         Task<bool> ExistsAsync(Guid issueId, CancellationToken cancellationToken);
+        Task<List<Issue>> GetIssuesByIdsAsync(Guid projectId, List<Guid> issueIds, CancellationToken cancellationToken = default);
         Task<IReadOnlyCollection<UserActiveIssueResponse>> GetActiveIssuesByAssigneeAsync(
         Guid userId,
         IEnumerable<IssueStatus> statuses,

@@ -22,6 +22,10 @@ namespace SigmaTrack.Infrastructure.Repositories
             return await _context.Projects
                 .FirstOrDefaultAsync(p => p.Prefix == prefix, cancellationToken);
         }
+        public async Task<bool> ExistsAsync(Guid projectId, CancellationToken cancellationToken = default)
+        {
+            return await _context.Projects.AnyAsync(p => p.Id == projectId, cancellationToken);
+        }
         public async Task<IEnumerable<Project>> GetAllAsync(CancellationToken cancellationToken)
         {
             return await _context.Projects

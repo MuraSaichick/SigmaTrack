@@ -8,33 +8,41 @@ using System.Text;
 namespace SigmaTrack.Application.Features.Issues.GetIssuesList
 {
     public record IssueDto(
-    Guid Id,
-    int Number,
-    string Title,
-    int Status,
-    int Type,
-    int Priority,
-    int? StoryPoints,
-    Guid? AssigneeId,
-    DateTime UpdatedAt
-);
-
+        Guid Id,
+        int Number,
+        string Title,
+        int Status,
+        int Type,
+        int Priority,
+        int? StoryPoints,
+        Guid? AssigneeId,
+        DateTime UpdatedAt
+            );
     public record PagedListResponse<T>(
         System.Collections.Generic.IReadOnlyCollection<T> Items,
         int TotalCount,
         int PageNumber,
         int PageSize
     );
+    public record GetIssuesApiRequest(
+        IssueStatus? Status,
+        IssueType? Type,
+        IssuePriority? Priority,
+        Guid? AssigneeId,
+        string? SearchTerm,
+        int PageNumber = 1,
+        int PageSize = 20
+    );
     public record GetIssuesListQuery(
-    Guid ProjectId,
-    IssueStatus? Status,
-    IssueType? Type,
-    IssuePriority? Priority,
-    Guid? AssigneeId,
-    string? SearchTerm,
-    int PageNumber = 1,
-    int PageSize = 20
-        );
+        Guid ProjectId,
+        IssueStatus? Status,
+        IssueType? Type,
+        IssuePriority? Priority,
+        Guid? AssigneeId,
+        string? SearchTerm,
+        int PageNumber,
+        int PageSize
+    );
     public interface IGetIssuesListUseCase
     {
         Task<PagedListResponse<IssueDto>> ExecuteAsync(GetIssuesListQuery query, CancellationToken cancellationToken);
