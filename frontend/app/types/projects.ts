@@ -61,3 +61,9 @@ export interface CreateInvitationResponse {
   invitationId: string
   status: string
 }
+export enum ProjectRoleEnum {
+  ProjectManager = 1,
+  Developer = 2,
+  QAEngineer = 3,
+  Observer = 4
+}

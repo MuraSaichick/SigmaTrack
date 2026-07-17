@@ -3,7 +3,7 @@ using SigmaTrack.Application.DTOs;
 using SigmaTrack.Application.Interfaces;
 using SigmaTrack.Domain.Enums;
 
-namespace SigmaTrack.Infrastructure
+namespace SigmaTrack.Infrastructure.Services
 {
     public class LocalStorageService : IStorageService
     {

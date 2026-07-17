@@ -963,6 +963,13 @@ namespace SigmaTrack.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("position");
 
+                    b.Property<string>("Privacy")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("privacy")
+                        .HasDefaultValueSql("'{ \"ShowContacts\": 2, \"ShowBirthDate\": 2, \"ShowOnlineStatus\": true, \"WhoCanInviteMe\": 1, \"Searchable\": true, \"ShowStatusMessage\": true }'");
+
                     b.Property<int>("RoleId")
                         .HasColumnType("integer")
                         .HasColumnName("role_id");

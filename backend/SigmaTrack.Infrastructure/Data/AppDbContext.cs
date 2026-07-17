@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using SigmaTrack.Domain.Entities;
+using SigmaTrack.Domain.Entities.ValueObjects;
 using SigmaTrack.Domain.Enums;
 using System;
 using System.Collections.Generic;
@@ -62,6 +63,31 @@ namespace SigmaTrack.Infrastructure.Data
                 d => d.Aggregate(0, (a, p) => HashCode.Combine(a, p.Key.GetHashCode(), p.Value.GetHashCode())),
                 d => d.ToDictionary(k => k.Key, v => v.Value)
             );
+            var privacyComparer = new ValueComparer<PrivacySettings>(
+                (p1, p2) => p1 != null && p2 != null &&
+                p1.ShowContacts == p2.ShowContacts &&
+                p1.ShowBirthDate == p2.ShowBirthDate &&
+                p1.ShowOnlineStatus == p2.ShowOnlineStatus &&
+                p1.WhoCanInviteMe == p2.WhoCanInviteMe &&
+                p1.Searchable == p2.Searchable &&
+                p1.ShowStatusMessage == p2.ShowStatusMessage,
+                p => HashCode.Combine(
+                    p.ShowContacts,
+                    p.ShowBirthDate,
+                    p.ShowOnlineStatus,
+                    p.WhoCanInviteMe,
+                    p.Searchable,
+                    p.ShowStatusMessage),
+                p => new PrivacySettings
+                {
+                    ShowContacts = p.ShowContacts,
+                    ShowBirthDate = p.ShowBirthDate,
+                    ShowOnlineStatus = p.ShowOnlineStatus,
+                    WhoCanInviteMe = p.WhoCanInviteMe,
+                    Searchable = p.Searchable,
+                    ShowStatusMessage = p.ShowStatusMessage
+                }
+);
 
             modelBuilder.Entity<Issue>(entity =>
             {
@@ -113,6 +139,17 @@ namespace SigmaTrack.Infrastructure.Data
                 .WithMany(r => r.Users)
                 .HasForeignKey(u => u.RoleId)
                 .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.Property(u => u.Privacy)
+                    .HasColumnType("jsonb")
+                    .HasDefaultValueSql("'{ \"ShowContacts\": 2, \"ShowBirthDate\": 2, \"ShowOnlineStatus\": true, \"WhoCanInviteMe\": 1, \"Searchable\": true, \"ShowStatusMessage\": true }'")
+                    .HasConversion(
+                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                        v => JsonSerializer.Deserialize<PrivacySettings>(v, (JsonSerializerOptions?)null) ?? new PrivacySettings()
+                    )
+                    .Metadata.SetValueComparer(privacyComparer);
+            });
 
             modelBuilder.Entity<Project>()
                 .HasOne(p => p.Creator)

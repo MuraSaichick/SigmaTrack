@@ -65,5 +65,54 @@ namespace SigmaTrack.Infrastructure.Repositories
                 .Take(limit)
                 .ToListAsync(cancellationToken);
         }
+        public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return false;
+            }
+
+            var formattedEmail = email.Trim().ToLowerInvariant();
+
+            return await _context.Users
+                .AnyAsync(u => u.Email.ToLower() == formattedEmail, cancellationToken);
+        }
+        public async Task<(List<User> Items, int TotalCount)> SearchActiveUsersAsync(
+        string searchTerm,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+        {
+            var normalizedSearchTerm = searchTerm.ToLower();
+            var query = _context.Users
+                .Where(u => u.Privacy.Searchable &&
+                            (u.Login.ToLower().Contains(normalizedSearchTerm) ||
+                             u.Firstname.ToLower().Contains(normalizedSearchTerm) ||
+                             u.Lastname.ToLower().Contains(normalizedSearchTerm)));
+            var totalCount = await query.CountAsync(cancellationToken);
+
+            var items = await query
+                .OrderBy(u => u.Lastname)
+                .ThenBy(u => u.Firstname)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+            return (items, totalCount);
+        }
+
+        public async Task<bool> AreUsersInSameTeamAsync(
+            Guid firstUserId,
+            Guid secondUserId,
+            CancellationToken cancellationToken = default)
+        {
+            var firstUserProjectIds = _context.ProjectMembers
+                .Where(pm => pm.UserId == firstUserId)
+                .Select(pm => pm.ProjectId);
+            return await _context.ProjectMembers
+                .AnyAsync(pm => pm.UserId == secondUserId &&
+                                firstUserProjectIds.Contains(pm.ProjectId),
+                          cancellationToken);
+        }
     }
 }

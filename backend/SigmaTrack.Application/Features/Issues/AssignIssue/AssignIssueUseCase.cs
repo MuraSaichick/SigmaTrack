@@ -27,18 +27,21 @@ public class AssignIssueUseCase : IAssignIssueUseCase
     private readonly INotificationRepository _notificationRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IValidator<AssignIssueCommand> _validator;
+    private readonly INotificationSender _notificationSender;
     public AssignIssueUseCase(
         IIssueRepository issueRepository,
         IProjectRepository projectRepository,
         INotificationRepository notificationRepository,
         IUnitOfWork unitOfWork,
-        IValidator<AssignIssueCommand> validator)
+        IValidator<AssignIssueCommand> validator,
+        INotificationSender notificationSender)
     {
         _issueRepository = issueRepository;
         _projectRepository = projectRepository;
         _notificationRepository = notificationRepository;
         _unitOfWork = unitOfWork;
         _validator = validator;
+        _notificationSender = notificationSender;
     }
     public async Task ExecuteAsync(AssignIssueCommand command, CancellationToken cancellationToken)
     {
@@ -61,9 +64,10 @@ public class AssignIssueUseCase : IAssignIssueUseCase
             }
         }
         bool isChanged = issue.AssignTo(command.AssigneeId);
+        Notification? notification = null;
         if (isChanged && command.AssigneeId.HasValue && command.AssigneeId.Value != command.CurrentUserId)
         {
-            var notification = Notification.CreateIssueAssigned(
+            notification = Notification.CreateIssueAssigned(
                 command.AssigneeId.Value,
                 issue.ProjectId,
                 issue.Id,
@@ -72,5 +76,24 @@ public class AssignIssueUseCase : IAssignIssueUseCase
             await _notificationRepository.AddAsync(notification, cancellationToken);
         }
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+        if (notification != null)
+        {
+            var notificationDto = new
+            {
+                id = notification.Id,
+                type = notification.Type.ToString(),
+                title = notification.Title,
+                message = notification.Message,
+                linkUrl = notification.LinkUrl,
+                createdAt = notification.CreatedAt,
+                isRead = notification.IsRead
+            };
+            await _notificationSender.SendToUserAsync(
+                notification.UserId,
+                "ReceiveNotification",
+                notificationDto,
+                cancellationToken
+            );
+        }
     }
 }

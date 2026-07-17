@@ -10,6 +10,7 @@ using SigmaTrack.Infrastructure.Authentication;
 using SigmaTrack.Infrastructure.Common;
 using SigmaTrack.Infrastructure.Data;
 using SigmaTrack.Infrastructure.Repositories;
+using SigmaTrack.Infrastructure.Services;
 using SigmaTrack.WebApi.Endpoints;
 using SigmaTrack.WebApi.Middleware;
 using System.Text;
@@ -45,15 +46,31 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
+
 builder.Services.AddAuthorization();
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddSignalR();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IJwtProvider, JwtProvider>();
 builder.Services.AddScoped<IStorageService, LocalStorageService>();
+builder.Services.AddScoped<INotificationSender, SignalRNotificationSender>();
 
 builder.Services.AddInfrastructureRepositories(typeof(IssueRepository).Assembly);
 
@@ -61,6 +78,7 @@ builder.Services.AddApplicationUseCases(typeof(CreateIssueUseCase).Assembly);
 
 var app = builder.Build();
 app.UseExceptionHandler();
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 using (var scope = app.Services.CreateScope())
 {

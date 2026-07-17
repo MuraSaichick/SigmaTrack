@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useProjectsStore } from '~/stores/useProjectsStore'
+import { useNotificationsStore } from '#imports'
 import type { DropdownMenuItem } from '#ui/types'
 import type { CreateProjectRequest } from '~/types/projects'
 
 const config = useRuntimeConfig()
 const { t, locale } = useI18n()
 const route = useRoute()
-const { user, logout } = useAuth()
+const { user, logout, token } = useAuth()
+const notificationsStore = useNotificationsStore()
 const colorMode = useColorMode()
 
 const projectsStore = useProjectsStore()
@@ -72,6 +74,9 @@ const globalMenuItems = computed(() => [
 watch(selectedProject, async (newProject) => {
   if (!newProject) return
   if (route.params.projectId === newProject.id) return
+  if (!route.path.startsWith('/projects/')) {
+    return; 
+  }
 
   if (route.params.projectId) {
     const pathParts = route.path.split('/')
@@ -86,7 +91,7 @@ watch(selectedProject, async (newProject) => {
       await navigateTo(`/projects/${newProject.id}/dashboard`)
     }
   } else {
-    await navigateTo(`/projects/${newProject.id}/board`)
+    await navigateTo(`/projects/${newProject.id}/dashboard`)
   }
 })
 
@@ -118,7 +123,7 @@ const projectMenuItems = computed(() => {
   ]
   if (selectedProject.value.currentUserRole === 1) {
     items.push({
-      label: t('menu.settings'),
+      label: t('menu.project_settings'),
       icon: 'i-lucide-settings-2',
       to: `/projects/${projectId}/settings`
     })
@@ -128,10 +133,16 @@ const projectMenuItems = computed(() => {
 
 const profileDropdownItems = computed<DropdownMenuItem[]>(() => [
   {
-    label: t('menu.profile_settings'),
-    icon: 'i-lucide-settings',
+    label: t('menu.my_profile'),
+    icon: 'i-lucide-user',
     onSelect: () => { navigateTo('/profile') }
   },
+  {
+    label: t('menu.account_settings'),
+    icon: 'i-lucide-settings',
+    onSelect: () => { navigateTo('/settings') }
+  },
+  { type: 'separator' },
   {
     label: `Язык: ${locale.value.toUpperCase()}`,
     icon: 'i-lucide-languages',
@@ -153,24 +164,40 @@ const profileDropdownItems = computed<DropdownMenuItem[]>(() => [
 
 onMounted(async () => {
   fetchProjects()
+
+  if(import.meta.client && token.value) {
+    await notificationsStore.fetchNotifications()
+    await notificationsStore.startSignalR(token.value)
+  }
+})  
+
+onBeforeUnmount(async () => {
+  if(import.meta.client) {
+    await notificationsStore.stopSignalR()
+  }
 })
 </script>
 
 <template>
   <div
     class="min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-50 flex transition-colors duration-300">
+    
     <header
       class="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800 px-4 flex items-center justify-between z-40">
-      <h1 class="text-xl font-black tracking-tight text-primary">
+      <h1 class="text-xl font-black tracking-tight text-primary mr-2">
         SIGMA<span class="text-neutral-900 dark:text-white font-semibold">TRACK</span>
       </h1>
-      <div class="flex items-center gap-2">
+      
+      <div class="flex items-center gap-3">
+        <GlobalSearch />
+        
         <NotificationBell />
 
         <UButton :icon="isMobileMenuOpen ? 'i-lucide-x' : 'i-lucide-menu'" color="neutral" variant="ghost"
           @click="void (isMobileMenuOpen = !isMobileMenuOpen)" />
       </div>
     </header>
+
     <aside
       :class="[isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0', 'fixed lg:sticky top-0 left-0 bottom-0 w-64 h-screen bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 flex flex-col p-4 z-50 transition-transform duration-300 ease-in-out lg:z-0']">
       <div class="space-y-4 shrink-0 pb-2">
@@ -210,6 +237,10 @@ onMounted(async () => {
             </template>
           </UDropdownMenu>
           <NotificationBell />
+        </div>
+
+        <div class="hidden lg:block px-1">
+          <GlobalSearch class="w-full" />
         </div>
       </div>
 

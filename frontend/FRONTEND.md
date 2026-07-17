@@ -73,34 +73,30 @@ NUXT_PUBLIC_API_BASE=http://localhost
 
 ## 🚀 Скрипты запуска (CLI)
 
-Управление проектом осуществляется через быстрый и дедуплицирующий менеджер пакетов `pnpm`:
+Управление проектом осуществляется через стандартный менеджер пакетов **npm**.
 
 Установка всех зависимостей проекта:
 
 ```bash
-pnpm install
-
+npm install
 ```
 
 Запуск локального сервера разработки (с hot-reload):
 
 ```bash
-pnpm dev
-
+npm run dev
 ```
 
 Сборка оптимизированного Production-бандла:
 
 ```bash
-pnpm build
-
+npm run build
 ```
 
 Локальный запуск и проверка собранного Production-приложения (SSR Node.js сервер):
 
 ```bash
-pnpm preview
-
+npm run preview
 ```
 
 ## 🐳 Контейнеризация (Docker)

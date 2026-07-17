@@ -1,8 +1,5 @@
 ﻿using SigmaTrack.Application.Interfaces;
 using SigmaTrack.Application.Interfaces.Repositories;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SigmaTrack.Application.Features.Auth.Login
 {

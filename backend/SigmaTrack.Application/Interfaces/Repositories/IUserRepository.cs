@@ -14,7 +14,13 @@ namespace SigmaTrack.Application.Interfaces.Repositories
         Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
         void Update(User user);
         Task SaveChangesAsync(CancellationToken cancellationToken);
-        Task<List<User>> SearchAsync(string query, int limit, CancellationToken cancellationToken = default);
+        Task<(List<User> Items, int TotalCount)> SearchActiveUsersAsync(
+         string searchTerm,
+         int page,
+         int pageSize,
+         CancellationToken cancellationToken = default);
+        Task<bool> AreUsersInSameTeamAsync(Guid firstUserId, Guid secondUserId, CancellationToken cancellationToken = default);
+        Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default);
 
     }
 }

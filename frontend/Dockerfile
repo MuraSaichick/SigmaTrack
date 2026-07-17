@@ -1,11 +1,13 @@
 FROM node:24-alpine AS builder 
 WORKDIR /app
 
-COPY package.json ./
+COPY package.json package-lock.json ./
 
-RUN npm install
+RUN npm ci --legacy-peer-deps
 
 COPY . .
+
+ENV NUXT_TELEMETRY_DISABLED=1
 
 RUN npm run build
 

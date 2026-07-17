@@ -3,7 +3,7 @@ import { storeToRefs } from 'pinia'
 import { SprintStatus } from '~/types/sprint'
 
 const route = useRoute()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const projectId = computed(() => route.params.projectId as string)
 const sprintId = computed(() => route.params.sprintId as string)
 
@@ -26,17 +26,17 @@ onMounted(() => {
 
 const getSprintStatusConfig = (status: SprintStatus) => {
     const configs = {
-        [SprintStatus.Planning]: { label: 'Планирование', color: 'neutral' as const, icon: 'i-lucide-calendar-days' },
-        [SprintStatus.Active]: { label: 'Активен', color: 'primary' as const, icon: 'i-lucide-play' },
-        [SprintStatus.Completed]: { label: 'Завершен', color: 'success' as const, icon: 'i-lucide-check-circle' },
-        [SprintStatus.Cancelled]: { label: 'Отменен', color: 'error' as const, icon: 'i-lucide-x-circle' },
+        [SprintStatus.Planning]: { label: t('sprints.statusLabels.planning'), color: 'neutral' as const, icon: 'i-lucide-calendar-days' },
+        [SprintStatus.Active]: { label: t('sprints.statusLabels.active'), color: 'primary' as const, icon: 'i-lucide-play' },
+        [SprintStatus.Completed]: { label: t('sprints.statusLabels.completed'), color: 'success' as const, icon: 'i-lucide-check-circle' },
+        [SprintStatus.Cancelled]: { label: t('sprints.statusLabels.cancelled'), color: 'error' as const, icon: 'i-lucide-x-circle' },
     }
-    return configs[status] || { label: status, color: 'neutral' as const, icon: 'i-lucide-help-circle' }
+    return configs[status] || { label: t('sprints.statusLabels.unknown'), color: 'neutral' as const, icon: 'i-lucide-help-circle' }
 }
 
 const formatDate = (dateStr: string) => {
     if (!dateStr) return '—'
-    return new Date(dateStr).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short', year: 'numeric' })
+    return new Date(dateStr).toLocaleDateString(locale.value, { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 const handleStartSprint = async () => {
@@ -48,7 +48,7 @@ const handleCompleteSprint = async () => {
 }
 
 const handleCancelSprint = async () => {
-    if (confirm('Вы уверены, что хотите отменить этот спринт? Все незавершенные задачи вернутся в бэклог.')) {
+    if (confirm(t('sprintDetail.confirmCancelMessage'))) {
         await sprintStore.cancelSprint(projectId.value, sprintId.value)
     }
 }
@@ -97,7 +97,7 @@ const availableIssuesForModal = computed(() => {
                     variant="ghost" class="rounded-xl" />
                 <div>
                     <div class="flex items-center gap-2 mb-1">
-                        <span class="text-xs font-bold text-neutral-400">СПРИНТ</span>
+                        <span class="text-xs font-bold text-neutral-400">{{ $t('sprintDetail.headerPrefix') }}</span>
                         <UBadge v-if="currentSprint" :color="getSprintStatusConfig(currentSprint.status).color"
                             size="xs" variant="subtle" class="flex items-center gap-1 rounded-md">
                             <UIcon :name="getSprintStatusConfig(currentSprint.status).icon" class="w-3 h-3" />
@@ -105,7 +105,7 @@ const availableIssuesForModal = computed(() => {
                         </UBadge>
                     </div>
                     <h1 class="text-2xl font-black tracking-tight text-neutral-900 dark:text-white">
-                        {{ currentSprint?.name ?? 'Загрузка спринта...' }}
+                        {{ currentSprint?.name ?? $t('issues.loading') }}
                     </h1>
                 </div>
             </div>
@@ -113,26 +113,26 @@ const availableIssuesForModal = computed(() => {
             <div v-if="currentSprint" class="flex items-center gap-2">
                 <UButton v-if="currentSprint.status === SprintStatus.Planning" icon="i-lucide-play" color="primary"
                     class="rounded-xl font-bold" :loading="isSubmittingAction" @click="() => handleStartSprint()">
-                    Запустить спринт
+                    {{ $t('sprintDetail.startSprintBtn') }}
                 </UButton>
 
                 <UButton v-if="currentSprint.status === SprintStatus.Active" icon="i-lucide-check-check" color="success"
                     class="rounded-xl font-bold" :loading="isSubmittingAction" @click="() => handleCompleteSprint()">
-                    Завершить спринт
+                    {{ $t('sprintDetail.completeSprintBtn') }}
                 </UButton>
 
                 <UButton
                     v-if="currentSprint.status === SprintStatus.Planning || currentSprint.status === SprintStatus.Active"
                     icon="i-lucide-plus" color="neutral" variant="soft" class="rounded-xl font-bold"
                     @click="() => openAddIssuesModal()">
-                    Добавить задачи
+                    {{ $t('sprintDetail.addIssuesBtn') }}
                 </UButton>
 
                 <UButton
                     v-if="currentSprint.status === SprintStatus.Planning || currentSprint.status === SprintStatus.Active"
                     icon="i-lucide-ban" color="error" variant="ghost" class="rounded-xl font-bold"
                     :loading="isSubmittingAction" @click="handleCancelSprint">
-                    Отменить спринт
+                    {{ $t('sprintDetail.cancelSprintBtn') }}
                 </UButton>
             </div>
         </div>
@@ -147,11 +147,11 @@ const availableIssuesForModal = computed(() => {
                 <UCard class="rounded-2xl shadow-sm">
                     <template #header>
                         <h2 class="text-xs font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-2">
-                            <UIcon name="i-lucide-target" class="w-4 h-4" /> Цель спринта
+                            <UIcon name="i-lucide-target" class="w-4 h-4" /> {{ $t('sprintDetail.goalTitle') }}
                         </h2>
                     </template>
                     <p class="text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-line leading-relaxed">
-                        {{ currentSprint.goal || 'Цель для этого спринта не сформулирована.' }}
+                        {{ currentSprint.goal || $t('sprintDetail.goalEmpty') }}
                     </p>
                 </UCard>
 
@@ -160,14 +160,14 @@ const availableIssuesForModal = computed(() => {
                         <div class="flex justify-between items-center">
                             <h2
                                 class="text-xs font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-2">
-                                <UIcon name="i-lucide-list-todo" class="w-4 h-4" /> Задачи спринта ({{
-                                    currentSprint.issues.length }})
+                                <UIcon name="i-lucide-list-todo" class="w-4 h-4" /> {{ $t('sprintDetail.issuesTitle', {
+                                    count: currentSprint.issues.length }) }}
                             </h2>
                         </div>
                     </template>
 
                     <div v-if="currentSprint.issues.length === 0" class="text-center py-8 text-neutral-400 text-sm">
-                        В этом спринте пока нет задач. Нажмите кнопку «Добавить задачи», чтобы наполнить спринт.
+                        {{ $t('sprintDetail.issuesEmpty') }}
                     </div>
 
                     <div v-else class="divide-y divide-neutral-100 dark:divide-neutral-800">
@@ -191,7 +191,7 @@ const availableIssuesForModal = computed(() => {
                                     {{ issue.storyPoints }} SP
                                 </UBadge>
                                 <span class="text-xs text-neutral-400 max-w-[120px] truncate"
-                                    :title="issue.assigneeName || 'Без исполнителя'">
+                                    :title="issue.assigneeName || $t('issues.assigneeNone')">
                                     {{ issue.assigneeName || '—' }}
                                 </span>
 
@@ -199,7 +199,7 @@ const availableIssuesForModal = computed(() => {
                                     v-if="currentSprint.status === SprintStatus.Planning || currentSprint.status === SprintStatus.Active"
                                     icon="i-lucide-x" color="error" variant="ghost" size="xs"
                                     class="opacity-0 group-hover/item:opacity-100 transition rounded-md"
-                                    :loading="isSubmittingAction" title="Удалить из спринта"
+                                    :loading="isSubmittingAction" :title="$t('team.modal.cancelBtn')"
                                     @click.stop="handleRemoveIssue(issue.id)" />
                             </div>
                         </div>
@@ -211,20 +211,20 @@ const availableIssuesForModal = computed(() => {
                 <UCard class="rounded-2xl shadow-sm sticky top-6">
                     <template #header>
                         <h2 class="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                            <UIcon name="i-lucide-sliders-horizontal" class="w-4 h-4 text-neutral-400" /> Параметры и
-                            Емкость
+                            <UIcon name="i-lucide-sliders-horizontal" class="w-4 h-4 text-neutral-400" /> {{
+                                $t('sprintDetail.sidebarTitle') }}
                         </h2>
                     </template>
 
                     <div class="space-y-4">
                         <div class="bg-neutral-50 dark:bg-neutral-900/60 p-3 rounded-xl space-y-2 text-xs">
                             <div class="flex justify-between">
-                                <span class="text-neutral-400">Дата начала:</span>
+                                <span class="text-neutral-400">{{ $t('sprintDetail.startDateLabel') }}</span>
                                 <span class="font-medium text-neutral-800 dark:text-neutral-200">{{
                                     formatDate(currentSprint.startDate) }}</span>
                             </div>
                             <div class="flex justify-between">
-                                <span class="text-neutral-400">Дата окончания:</span>
+                                <span class="text-neutral-400">{{ $t('sprintDetail.endDateLabel') }}</span>
                                 <span class="font-medium text-neutral-800 dark:text-neutral-200">{{
                                     formatDate(currentSprint.endDate) }}</span>
                             </div>
@@ -232,18 +232,24 @@ const availableIssuesForModal = computed(() => {
 
                         <div class="grid grid-cols-3 gap-2 text-center">
                             <div class="bg-neutral-50 dark:bg-neutral-900 p-2.5 rounded-xl">
-                                <span class="text-[10px] text-neutral-400 block mb-0.5">Емкость</span>
+                                <span class="text-[10px] text-neutral-400 block mb-0.5">{{
+                                    $t('sprintDetail.capacityLabel')
+                                    }}</span>
                                 <span class="text-base font-bold text-neutral-800 dark:text-neutral-200">{{
                                     currentSprint.capacity
                                 }}</span>
                             </div>
                             <div class="bg-neutral-50 dark:bg-neutral-900 p-2.5 rounded-xl">
-                                <span class="text-[10px] text-neutral-400 block mb-0.5">Взято</span>
+                                <span class="text-[10px] text-neutral-400 block mb-0.5">{{
+                                    $t('sprintDetail.committedLabel')
+                                    }}</span>
                                 <span class="text-base font-bold text-primary">{{ currentSprint.committedPoints
                                 }}</span>
                             </div>
                             <div class="bg-neutral-50 dark:bg-neutral-900 p-2.5 rounded-xl">
-                                <span class="text-[10px] text-neutral-400 block mb-0.5">Закрыто</span>
+                                <span class="text-[10px] text-neutral-400 block mb-0.5">{{
+                                    $t('sprintDetail.completedLabel')
+                                    }}</span>
                                 <span class="text-base font-bold text-success">{{ currentSprint.completedPoints
                                 }}</span>
                             </div>
@@ -251,7 +257,7 @@ const availableIssuesForModal = computed(() => {
 
                         <div class="space-y-1">
                             <div class="flex justify-between text-xs">
-                                <span class="text-neutral-400">Загрузка емкости:</span>
+                                <span class="text-neutral-400">{{ $t('sprintDetail.capacityProgressLabel') }}</span>
                                 <span class="font-bold"
                                     :class="currentSprint.committedPoints > currentSprint.capacity ? 'text-error' : 'text-neutral-600'">
                                     {{ Math.round((currentSprint.committedPoints / currentSprint.capacity) * 100) }}%
@@ -271,7 +277,8 @@ const availableIssuesForModal = computed(() => {
                 <UCard class="rounded-2xl max-w-lg w-full mx-auto">
                     <template #header>
                         <div class="flex justify-between items-center">
-                            <h3 class="text-base font-bold text-neutral-900 dark:text-white">Добавление задач в спринт
+                            <h3 class="text-base font-bold text-neutral-900 dark:text-white">{{
+                                $t('sprintDetail.modal.title') }}
                             </h3>
                             <UButton color="neutral" variant="ghost" icon="i-lucide-x" @click="closeAddIssuesModal" />
                         </div>
@@ -284,7 +291,7 @@ const availableIssuesForModal = computed(() => {
 
                         <div v-else-if="availableIssuesForModal.length === 0"
                             class="text-center py-6 text-sm text-neutral-400">
-                            Нет доступных свободных задач для добавления.
+                            {{ $t('sprintDetail.modal.empty') }}
                         </div>
 
                         <div v-else class="space-y-2">
@@ -319,12 +326,12 @@ const availableIssuesForModal = computed(() => {
                     <template #footer>
                         <div class="flex justify-end gap-2">
                             <UButton color="neutral" variant="ghost" class="rounded-xl" @click="closeAddIssuesModal">
-                                Отмена
+                                {{ $t('team.modal.cancelBtn') }}
                             </UButton>
                             <UButton color="primary" class="rounded-xl font-bold"
                                 :disabled="!selectedIssuesForSprint || selectedIssuesForSprint.length === 0"
                                 :loading="isSubmittingAction" @click="handleAddIssuesConfirm">
-                                Добавить выбранные ({{ selectedIssuesForSprint?.length ?? 0 }})
+                                {{ $t('sprintDetail.modal.addBtn', { count: selectedIssuesForSprint?.length ?? 0 }) }}
                             </UButton>
                         </div>
                     </template>

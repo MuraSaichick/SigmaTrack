@@ -33,11 +33,12 @@ export default {
     kanban: "Канбан",
     sprints: "Спринты",
     team: "Команда",
-    settings: "Настройки проекта",
+    project_settings: "Настройки проекта",
     my_tasks: 'Мои задачи',
     board: 'Канбан-доска',
     reports: 'Аналитика',
-    profile_settings: 'Настройки профиля',
+    my_profile: 'Мой профиль',
+    account_settings: 'Настройки',
     logout: 'Выйти'
   },
   globalRoles: {
@@ -82,6 +83,56 @@ export default {
       error: {
         title: 'Ошибка',
         desc: 'Не удалось покинуть проект.'
+      }
+    },
+  },
+  settings: {
+    title: "Настройки аккаунта",
+    subtitle: "Управление безопасностью учетной записи и параметрами приватности в системе.",
+    tabs: {
+      security: "Безопасность",
+      privacy: "Приватность"
+    },
+    security: {
+      title: "Учетные данные",
+      subtitle: "Изменение почтового ящика и пароля для входа.",
+      emailLabel: "Электронная почта",
+      emailDesc: "Используется для уведомлений и входа",
+      passwordChangeTitle: "Смена пароля",
+      currentPassword: "Текущий пароль",
+      newPassword: "Новый пароль",
+      confirmPassword: "Подтвердите новый пароль",
+      saveButton: "Сохранить изменения"
+    },
+    privacy: {
+      title: "Конфиденциальность",
+      subtitle: "Настройки отображения ваших данных для других участников команд.",
+      contactsLabel: "Кто видит мои контакты?",
+      contactsDesc: "Управляет доступом к вашему Telegram, Skype и телефону",
+      birthDateLabel: "Отображение даты рождения",
+      birthDateDesc: "Укажите, кто видит вашу дату рождения",
+      invitationLabel: "Кто может приглашать меня в проекты?",
+      invitationDesc: "Ограничение входящих приглашений в команды",
+      onlineStatusTitle: "Статус «В сети»",
+      onlineStatusDesc: "Показывать, когда вы активны на платформе.",
+      searchableTitle: "Участие в поиске",
+      searchableDesc: "Разрешить находить ваш профиль по логину или фамилии.",
+      statusMsgTitle: "Статусные сообщения",
+      statusMsgDesc: "Отображать ваш текущий статус (например, «В отпуске») в карточке задач.",
+      saveButton: "Применить настройки",
+      contactVisibility: {
+        Everyone: "Все пользователи",
+        TeamOnly: "Только команда",
+        Nobody: "Никто"
+      },
+      birthDateVisibility: {
+        FullDate: "Показывать полностью",
+        MonthAndDayOnly: "Только день и месяц",
+        Hidden: "Скрыть дату рождения"
+      },
+      invitationRestriction: {
+        Everyone: "Все пользователи",
+        TeamOnly: "Только участники команд"
       }
     }
   },
@@ -174,7 +225,7 @@ export default {
     description: 'Описание',
     descriptionEmpty: 'Описание отсутствует.',
     stepsToReproduce: 'Шаги для воспроизведения',
-    reproducibleStable: 'Воспроизводится стабильно:',
+    reproducibleStable: 'Воспроизводится стабильно',
     yes: 'Да',
     no: 'Нет',
     timeTracking: 'Оценка и логирование времени',
@@ -194,7 +245,7 @@ export default {
     assigneeNone: 'Не назначен',
     fieldType: 'Тип',
     fieldPriority: 'Приоритет',
-    fieldSeverity: 'Серьезность',
+    fieldSeverity: 'Серьезность (Severity)',
     fieldReporter: 'Автор',
     fieldComponent: 'Компонент',
     fieldVersion: 'Версия',
@@ -220,11 +271,21 @@ export default {
     formTagsPlaceholder: 'frontend, bug, sprint-2',
     cancelBtn: 'Отмена',
     createBtn: 'Создать задачу',
+    editPage: {
+      title: 'Редактирование задачи',
+      subtitle: 'Изменение деталей задачи',
+      saveBtn: 'Сохранить'
+    },
     severityLevels: {
-      s4: 'S4 - Незначительный',
-      s3: 'S3 - Умеренный',
-      s2: 'S2 - Значительный',
-      s1: 'S1 - Блокирующий',
+      critical: 'Critical (Критический)',
+      major: 'Major (Высокий)',
+      minor: 'Minor (Средний)',
+      trivial: 'Trivial (Незначительный)',
+      enhancement: 'Enhancement (Улучшение)',
+      s1: 'Critical (Критический)',
+      s2: 'Major (Высокий)',
+      s3: 'Minor (Средний)',
+      s4: 'Trivial (Незначительный)',
       unknown: 'Уровень {level}'
     },
     types: {
@@ -234,10 +295,83 @@ export default {
       task: 'Задача'
     },
     priorities: {
-      low: 'Низкий',
-      medium: 'Средний',
+      critical: 'Критический',
       high: 'Высокий',
-      critical: 'Критический'
+      medium: 'Средний',
+      low: 'Низкий',
+      trivial: 'Trivial (Минорный)'
+    }
+  },
+  sprints: {
+    title: 'Спринты проекта',
+    subtitle: 'Управление и планирование итераций',
+    createBtn: 'Создать спринт',
+    loading: 'Загрузка…',
+    errorTitle: 'Ошибка загрузки',
+    emptyTitle: 'Спринты с выбранным статусом не найдены.',
+    noGoal: 'Цель не указана',
+    committedPoints: 'Запланировано: {points} SP',
+    capacityLimit: 'Лимит: {limit} SP',
+    statuses: {
+      all: 'Все',
+      planning: 'Планируются',
+      active: 'Активные',
+      completed: 'Завершенные',
+      cancelled: 'Отмененные'
+    },
+    statusLabels: {
+      planning: 'Планирование',
+      active: 'Активен',
+      completed: 'Завершен',
+      cancelled: 'Отменен',
+      unknown: 'Неизвестно'
+    },
+    createPage: {
+      title: 'Создание спринта',
+      subtitle: 'Запланируйте новую рабочую итерацию проекта',
+      errorTitle: 'Ошибка создания',
+      nameLabel: 'Название спринта',
+      namePlaceholder: 'Например, Спринт 1: Интеграция API',
+      goalLabel: 'Цель спринта (необязательно)',
+      goalPlaceholder: 'Опишите основную бизнес-цель данной итерации...',
+      startDateLabel: 'Дата начала',
+      endDateLabel: 'Дата окончания',
+      capacityLabel: 'Емкость спринта (Capacity в Story Points)',
+      capacityPlaceholder: '100',
+      cancelBtn: 'Отмена',
+      submitBtn: 'Создать спринт'
+    },
+    validation: {
+      nameRequired: 'Название спринта обязательно.',
+      nameMaxLength: 'Максимальная длина 150 символов.',
+      startDateRequired: 'Укажите дату начала.',
+      endDateRequired: 'Укажите дату окончания.',
+      dateOrder: 'Дата окончания должна быть позже даты начала.',
+      capacityMin: 'Емкость должна быть больше 0.'
+    }
+  },
+  sprintDetail: {
+    headerPrefix: 'СПРИНТ',
+    startSprintBtn: 'Запустить спринт',
+    completeSprintBtn: 'Завершить спринт',
+    addIssuesBtn: 'Добавить задачи',
+    cancelSprintBtn: 'Отменить спринт',
+    confirmCancelMessage: 'Вы уверены, что хотите отменить этот спринт? Все незавершенные задачи вернутся в бэклог.',
+    goalTitle: 'Цель спринта',
+    goalEmpty: 'Цель для этого спринта не сформулирована.',
+    issuesTitle: 'Задачи спринта ({count})',
+    issuesEmpty: 'В этом спринте пока нет задач. Нажмите кнопку «Добавить задачи», чтобы наполнить спринт.',
+    sidebarTitle: 'Параметры и Емкость',
+    startDateLabel: 'Дата начала:',
+    endDateLabel: 'Дата окончания:',
+    capacityLabel: 'Емкость',
+    committedLabel: 'Взято',
+    completedLabel: 'Закрыто',
+    capacityProgressLabel: 'Загрузка емкости:',
+    modal: {
+      title: 'Добавление задач в спринт',
+      empty: 'Нет доступных свободных задач для добавления.',
+      addBtn: 'Добавить выбранные ({count})'
     }
   }
 }

@@ -33,11 +33,12 @@ export default {
     kanban: "Kanban",
     sprints: "Sprints",
     team: "Team",
-    settings: "Project Settings",
+    project_settings: "Project Settings",
     my_tasks: 'My Tasks',
     board: 'Board',
     reports: 'Reports',
-    profile_settings: 'Profile Settings',
+    my_profile: 'My Profile',
+    account_settings: 'Settings',
     logout: 'Logout'
   },
   globalRoles: {
@@ -82,6 +83,56 @@ export default {
       error: {
         title: 'Error',
         desc: 'Failed to leave the project.'
+      }
+    }
+  },
+  "settings": {
+    "title": "Account Settings",
+    "subtitle": "Manage your account security and privacy preferences.",
+    "tabs": {
+      "security": "Security",
+      "privacy": "Privacy"
+    },
+    "security": {
+      "title": "Credentials",
+      "subtitle": "Change your email address and login password.",
+      "emailLabel": "Email address",
+      "emailDesc": "Used for notifications and logging in",
+      "passwordChangeTitle": "Change password",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "saveButton": "Save changes"
+    },
+    "privacy": {
+      "title": "Privacy",
+      "subtitle": "Control how your personal information is displayed to other team members.",
+      "contactsLabel": "Who can see my contact info?",
+      "contactsDesc": "Manage access to your Telegram, Skype, and phone number",
+      "birthDateLabel": "Date of birth visibility",
+      "birthDateDesc": "Choose who can view your date of birth",
+      "invitationLabel": "Who can invite me to projects?",
+      "invitationDesc": "Restrict incoming team and project invitations",
+      "onlineStatusTitle": "Online status",
+      "onlineStatusDesc": "Show when you are active on the platform.",
+      "searchableTitle": "Profile discoverability",
+      "searchableDesc": "Allow others to find your profile by username or last name.",
+      "statusMsgTitle": "Status messages",
+      "statusMsgDesc": "Display your current status (e.g., 'On vacation') on task cards.",
+      "saveButton": "Apply settings",
+      "contactVisibility": {
+        "Everyone": "Everyone",
+        "Team Only": "Team only",
+        "Nobody": "Nobody"
+      },
+      "birthDateVisibility": {
+        "FullDate": "Show full date",
+        "MonthAndDayOnly": "Month and day only",
+        "Hidden": "Hide date of birth"
+      },
+      "invitationRestriction": {
+        "Everyone": "Everyone",
+        "TeamOnly": "Team members only"
       }
     }
   },
@@ -179,7 +230,7 @@ export default {
     description: 'Description',
     descriptionEmpty: 'No description provided.',
     stepsToReproduce: 'Steps to Reproduce',
-    reproducibleStable: 'Reproduces stably:',
+    reproducibleStable: 'Reproduces stably',
     yes: 'Yes',
     no: 'No',
     timeTracking: 'Estimation & Time Logging',
@@ -225,11 +276,21 @@ export default {
     formTagsPlaceholder: 'frontend, bug, sprint-2',
     cancelBtn: 'Cancel',
     createBtn: 'Create Issue',
+    editPage: {
+      title: 'Edit Issue',
+      subtitle: 'Modify issue details',
+      saveBtn: 'Save'
+    },
     severityLevels: {
-      s4: 'S4 - Trivial',
-      s3: 'S3 - Minor',
-      s2: 'S2 - Major',
-      s1: 'S1 - Blocker',
+      critical: 'Critical',
+      major: 'Major',
+      minor: 'Minor',
+      trivial: 'Trivial',
+      enhancement: 'Enhancement',
+      s1: 'Critical',
+      s2: 'Major',
+      s3: 'Minor',
+      s4: 'Trivial',
       unknown: 'Level {level}'
     },
     types: {
@@ -239,10 +300,83 @@ export default {
       task: 'Task'
     },
     priorities: {
-      low: 'Low',
-      medium: 'Medium',
+      critical: 'Critical',
       high: 'High',
-      critical: 'Critical'
+      medium: 'Medium',
+      low: 'Low',
+      trivial: 'Trivial'
+    }
+  },
+  sprints: {
+    title: 'Project Sprints',
+    subtitle: 'Manage and plan iterations',
+    createBtn: 'Create Sprint',
+    loading: 'Loading…',
+    errorTitle: 'Failed to load sprints',
+    emptyTitle: 'No sprints found with the selected status.',
+    noGoal: 'Goal is not specified',
+    committedPoints: 'Committed: {points} SP',
+    capacityLimit: 'Capacity: {limit} SP',
+    statuses: {
+      all: 'All',
+      planning: 'Planning',
+      active: 'Active',
+      completed: 'Completed',
+      cancelled: 'Cancelled'
+    },
+    statusLabels: {
+      planning: 'Planning',
+      active: 'Active',
+      completed: 'Completed',
+      cancelled: 'Cancelled',
+      unknown: 'Unknown'
+    },
+    createPage: {
+      title: 'Create Sprint',
+      subtitle: 'Plan a new working iteration for the project',
+      errorTitle: 'Creation failed',
+      nameLabel: 'Sprint Name',
+      namePlaceholder: 'e.g., Sprint 1: API Integration',
+      goalLabel: 'Sprint Goal (optional)',
+      goalPlaceholder: 'Describe the main business goal of this iteration...',
+      startDateLabel: 'Start Date',
+      endDateLabel: 'End Date',
+      capacityLabel: 'Sprint Capacity (in Story Points)',
+      capacityPlaceholder: '100',
+      cancelBtn: 'Cancel',
+      submitBtn: 'Create Sprint'
+    },
+    validation: {
+      nameRequired: 'Sprint name is required.',
+      nameMaxLength: 'Maximum length is 150 characters.',
+      startDateRequired: 'Please specify start date.',
+      endDateRequired: 'Please specify end date.',
+      dateOrder: 'End date must be later than start date.',
+      capacityMin: 'Capacity must be greater than 0.'
+    }
+  },
+  sprintDetail: {
+    headerPrefix: 'SPRINT',
+    startSprintBtn: 'Start Sprint',
+    completeSprintBtn: 'Complete Sprint',
+    addIssuesBtn: 'Add Issues',
+    cancelSprintBtn: 'Cancel Sprint',
+    confirmCancelMessage: 'Are you sure you want to cancel this sprint? All incomplete tasks will return to the backlog.',
+    goalTitle: 'Sprint Goal',
+    goalEmpty: 'No goal has been formulated for this sprint.',
+    issuesTitle: 'Sprint Issues ({count})',
+    issuesEmpty: 'There are no issues in this sprint yet. Click "Add Issues" to fill the sprint.',
+    sidebarTitle: 'Parameters & Capacity',
+    startDateLabel: 'Start Date:',
+    endDateLabel: 'End Date:',
+    capacityLabel: 'Capacity',
+    committedLabel: 'Committed',
+    completedLabel: 'Completed',
+    capacityProgressLabel: 'Capacity Load:',
+    modal: {
+      title: 'Add Issues to Sprint',
+      empty: 'No available unassigned issues to add.',
+      addBtn: 'Add Selected ({count})'
     }
   }
 }

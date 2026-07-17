@@ -1,5 +1,6 @@
 import type { NotificationDto } from '~/types/notification'
 import { useProjectsStore } from '~/stores/useProjectsStore'
+import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
 
 export const useNotificationsStore = defineStore('notifications', () => {
   const api = useApi()
@@ -8,7 +9,55 @@ export const useNotificationsStore = defineStore('notifications', () => {
 
   const notifications = ref<NotificationDto[]>([])
 
+  const hubConnection = ref<HubConnection | null>(null)
+  const isConnected = ref(false)
   const unreadCount = computed(() => notifications.value.filter(n => !n.isRead).length)
+
+  const startSignalR = async (token: string) => {
+    if (hubConnection.value) return
+    const config = useRuntimeConfig()
+    const connection = new HubConnectionBuilder()
+      .withUrl(`${config.public.apiBase}/hubs/notifications`,
+        {
+          accessTokenFactory: () => token
+        }
+      )
+      .withAutomaticReconnect()
+      .configureLogging(LogLevel.Information)
+      .build()
+
+    connection.on('ReceiveNotification', (newNotification: NotificationDto) => {
+      notifications.value.unshift(newNotification)
+      toast.add({
+        title: newNotification.title,
+        description: newNotification.message,
+        icon: 'i-heroicons-bell-alert',
+        color: 'primary',
+        actions: newNotification.linkUrl ? [
+          {
+            label: 'Открыть',
+            onClick: () => handleNotificationClick(newNotification)
+          }
+        ] : []
+      })
+    })
+    try {
+      await connection.start()
+      hubConnection.value = connection
+      isConnected.value = true
+      console.log('SignalR подключен к хабу уведомлений.')
+    } catch (err) {
+      console.error('Ошибка при старте SignalR:', err)
+    }
+  }
+  const stopSignalR = async () => {
+      if (hubConnection.value) {
+        await hubConnection.value.stop()
+      hubConnection.value = null
+      isConnected.value = false
+      console.log('SignalR отключен.')
+    }
+    }
 
   const fetchNotifications = async () => {
     try {
@@ -46,6 +95,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
       toast.add({ title: 'Успех', description: response.message, color: 'success' })
       notifications.value = notifications.value.filter(n => n.id !== notificationId)
       await projectsStore.fetchProjects()
+      markAsRead(notificationId);
     } catch (error: any) {
       toast.add({
         title: 'Ошибка',
@@ -62,6 +112,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
       })
       toast.add({ title: 'Отклонено', description: response.message, color: 'neutral' })
       notifications.value = notifications.value.filter(n => n.id !== notificationId)
+      markAsRead(notificationId);
     } catch (error: any) {
       toast.add({ title: 'Ошибка', description: error.data?.message || 'Не удалось отклонить', color: 'error' })
     }
@@ -71,7 +122,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
     if (!notification.isRead) {
       await markAsRead(notification.id)
     }
-    
+
     if (!notification.linkUrl) return
     const projectUuidRegex = /\/projects\/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i
     const match = notification.linkUrl.match(projectUuidRegex)
@@ -87,12 +138,15 @@ export const useNotificationsStore = defineStore('notifications', () => {
 
   const clearStore = () => {
     notifications.value = []
+    stopSignalR()
   }
 
   return {
     notifications,
     unreadCount,
     fetchNotifications,
+    startSignalR,
+    stopSignalR,
     markAsRead,
     markAllAsRead,
     acceptInvitation,

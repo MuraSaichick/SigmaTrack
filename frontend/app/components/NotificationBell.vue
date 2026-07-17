@@ -6,7 +6,7 @@ import { storeToRefs } from 'pinia'
 
 const notificationsStore = useNotificationsStore()
 const { notifications, unreadCount } = storeToRefs(notificationsStore)
-const { fetchNotifications, acceptInvitation, rejectInvitation, markAllAsRead, markAsRead } = notificationsStore
+const { fetchNotifications, acceptInvitation, rejectInvitation, markAllAsRead, markAsRead, handleNotificationClick} = notificationsStore
 
 const isLoading = ref(false)
 const processingId = ref<string | null>(null)
@@ -114,8 +114,6 @@ onMounted(() => {
                 <p class="text-xs font-bold text-neutral-900 dark:text-white truncate">
                   {{ item.title }}
                 </p>
-
-                <!-- Изменено: Проверка на неравенство типу входящего приглашения -->
                 <UButton v-if="!item.isRead && item.type !== NotificationType.ProjectInvitationReceived" size="xs"
                   color="neutral" variant="ghost" icon="i-lucide-check"
                   class="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 h-auto rounded-md"
@@ -126,8 +124,7 @@ onMounted(() => {
                 {{ item.message }}
               </p>
 
-              <!-- Изменено: Блок кнопок отображается только для типа входящего приглашения -->
-              <div v-if="item.type === NotificationType.ProjectInvitationReceived && extractInvitationId(item.linkUrl)"
+              <div v-if="item.type === NotificationType.ProjectInvitationReceived && extractInvitationId(item.linkUrl) && !item.isRead"
                 class="flex gap-2 mt-2.5">
                 <UButton size="xs" color="success" variant="solid" class="rounded-lg font-bold flex-1 justify-center"
                   :loading="processingId === extractInvitationId(item.linkUrl)"
@@ -142,7 +139,7 @@ onMounted(() => {
               </div>
 
               <div v-else-if="item.linkUrl" class="mt-2 flex justify-start">
-                <NuxtLink :to="item.linkUrl" @click="markAsRead(item.id)"
+                <NuxtLink :to="item.linkUrl" @click="handleNotificationClick(item)"
                   class="text-[10px] font-bold text-primary hover:underline flex items-center gap-1">
                   Посмотреть
                   <UIcon name="i-lucide-arrow-right" class="w-2.5 h-2.5" />

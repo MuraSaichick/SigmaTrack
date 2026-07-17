@@ -18,16 +18,19 @@ namespace SigmaTrack.Application.Features.Projects.AcceptInvitation
         private readonly IProjectRepository _projectRepository;
         private readonly INotificationRepository _notificationRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly INotificationSender _notificationSender;
         public AcceptInvitationUseCase(
         IProjectInvitationRepository invitationRepository,
         IProjectRepository projectRepository,
         INotificationRepository notificationRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        INotificationSender notificationSender)
         {
             _invitationRepository = invitationRepository;
             _projectRepository = projectRepository;
             _notificationRepository = notificationRepository;
             _unitOfWork = unitOfWork;
+            _notificationSender = notificationSender;
         }
         public async Task ExecuteAsync(AcceptInvitationCommand command, CancellationToken cancellationToken)
         {
@@ -61,6 +64,12 @@ namespace SigmaTrack.Application.Features.Projects.AcceptInvitation
             );
             await _notificationRepository.AddAsync(notification);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _notificationSender.SendToUserAsync(
+               notification.UserId,
+               "ReceiveNotification",
+               notification,
+               cancellationToken
+           );
         }
     }
 }

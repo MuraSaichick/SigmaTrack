@@ -10,6 +10,10 @@
   <ItemGroup>
     <ProjectReference Include="..\SigmaTrack.Domain\SigmaTrack.Domain.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Features\UserSettings\NotificationSettings\" />
+  </ItemGroup>
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
